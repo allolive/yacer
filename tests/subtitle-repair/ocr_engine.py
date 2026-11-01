@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 """OCR repair by the file's own error pattern - the reference the C++ in Kodi is checked against.
 
 A subtitle made by OCR from disc images repeats the same misreadings hundreds of times - one

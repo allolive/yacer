@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Stage only requested files from the pinned Amlogic Kodi source and patch stack.
 
 The default is the repository's Amlogic-ce/aarch64 package and no-display-server

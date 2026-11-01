@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Apply every package's patch stack to its pinned source, and report.
 
 prepare-tree.py does this for Kodi, because that is the tree the tests

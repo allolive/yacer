@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Run the subtitle repairs over a real library and prove, file by file, that they change only
 what their rules allow - and that the C++ Kodi runs does exactly what the Python reference does.
 

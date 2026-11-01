@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Compile the actual player handoff/flush wiring in a controlled collaborator harness.
 
 The full ARM image separately compiles the real class declarations. This host

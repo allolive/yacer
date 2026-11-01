@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Write to the CoreELEC mirror the builds are pinned to (MIRROR_REPO, by default
 # allolive/CoreELEC): it follows CoreELEC/CoreELEC, and keeps every commit a
 # build was pinned to under a tag, so upstream rewriting its history cannot take

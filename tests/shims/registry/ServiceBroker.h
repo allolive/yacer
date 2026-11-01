@@ -1,6 +1,5 @@
 /*
- *  Copyright (C) 2026 Team CoreELEC
- *  This file is part of CoreELEC - https://coreelec.org
+ *  Copyright (C) 2026 allolive
  *
  *  SPDX-License-Identifier: GPL-2.0-or-later
  */
