@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Where our patches live on the branch, where they land in the build tree, and
 # what makes a set of them valid. Sourced by yacer-assemble.sh (CI) and
 # yacer-local.sh (workstation) so the two cannot drift apart.

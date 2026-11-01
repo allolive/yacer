@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Build the change list page from the patches on this branch.
 #
 #   scripts/yacer-changes.py [OUTDIR]     (default: site)

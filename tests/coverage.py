@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Report gcov coverage of the production code the suites compile.
 
 Only files from the patched Kodi tree count. Coverage of the tests themselves

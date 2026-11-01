@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Compile the actual MVC timestamp reorder in a controlled picture harness.
 
 The full ARM image separately compiles the real codec. This host suite extracts

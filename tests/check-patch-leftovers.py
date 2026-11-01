@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Find what a hand-resolved merge leaves behind inside patch files.
 
 Reads each patch's hunks by their line counts, so a patch's own file headers

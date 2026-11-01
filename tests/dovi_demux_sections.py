@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Compile the actual legacy adapter, HDR detection and AddStream pairing branch.
 
 The host harness controls stream descriptions and inspects mutated demux state.

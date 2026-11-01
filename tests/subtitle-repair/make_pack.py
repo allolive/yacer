@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Build a subtitle-repair language pack: a language's Hunspell dictionaries and the profile the
 OCR repair reads beside them.
 

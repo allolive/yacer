@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 """The subtitle repairs in Python: the reference SubtitleCleanup.cpp (group 07) was ported from
 and is checked against, byte for byte, by check_library.py beside it. A rule changes here first,
 is proven on a real library there, and is then carried to the C++.

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 # Assemble this repository into a CoreELEC checkout for a local build, and take it
 # back out again afterwards.
