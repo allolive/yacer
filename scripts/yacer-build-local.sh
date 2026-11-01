@@ -5,7 +5,7 @@
 #
 #   yacer-build-local.sh              incremental
 #   CLEAN=1 yacer-build-local.sh      make distclean first
-#   TARGET=image yacer-build-local.sh add the fresh-flash .img.gz
+#   TARGET=image yacer-build-local.sh add the AM9 Pro .img.gz (tree-patches/0013)
 #   JOBS=N THREADS=N ...              override the concurrency
 #
 # Run it after 'yacer-local.sh apply'. It builds whatever is in the tree and
