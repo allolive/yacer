@@ -6,7 +6,9 @@ Subject: [PATCH] AMLAudioTrim: hold the audio clock in step with the master
 
 Add CAMLAudioTrim, a rate loop that trims mpll0 so the passthrough audio
 clock holds against the master clock, fed from the latency measurement and
-armed by the audio-lead setting.
+switched by the "Audio PLL trimming" setting, on by default. While it walks
+an offset out it asks for at most 50 ppm: a receiver behind a TV's eARC
+dropped the sound at hundreds of ppm and never at fifty.
 
 Aim it at the residual offset, pick the trim node by SoC (including S7D and
 S6), and leave the integrator alone when the setting is Off: hold m_want at
@@ -16,41 +18,23 @@ test, so the measurement is unchanged, and a genuine stand-down still latches.
 
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 diff --git a/addons/resource.language.en_gb/resources/strings.po b/addons/resource.language.en_gb/resources/strings.po
-index 3a5495f2c4..3f8796098e 100644
+index e2f6654132..d38f8f9396 100644
 --- a/addons/resource.language.en_gb/resources/strings.po
 +++ b/addons/resource.language.en_gb/resources/strings.po
-@@ -9143,6 +9143,42 @@ msgctxt "#14427"
+@@ -9155,6 +9155,24 @@ msgctxt "#14427"
  msgid "Player-Led"
  msgstr ""
  
 +#. Setting to trim the audio clock so sound and picture stay aligned
 +#: system/settings/settings.xml
 +msgctxt "#60020"
-+msgid "Audio passthrough A/V sync"
++msgid "Audio PLL trimming"
 +msgstr ""
 +
-+#. Help text of setting with label #60020 "Audio passthrough A/V sync"
++#. Help text of setting with label #60020 "Audio PLL trimming"
 +#: system/settings/settings.xml
 +msgctxt "#60021"
-+msgid "Corrects a standing offset between sound and picture by gently trimming the audio clock. Stronger settings clear a large drift sooner, though never more accurately, and make no difference to small ones. Some receivers and DACs will not follow a shifted clock - if yours clicks, mutes or drops out, choose a lower strength or turn it off. Has no effect on PCM output."
-+msgstr ""
-+
-+#. Option for setting #60020 "Audio passthrough A/V sync"
-+#: system/settings/settings.xml
-+msgctxt "#60022"
-+msgid "Light"
-+msgstr ""
-+
-+#. Option for setting #60020 "Audio passthrough A/V sync"
-+#: system/settings/settings.xml
-+msgctxt "#60023"
-+msgid "Medium"
-+msgstr ""
-+
-+#. Option for setting #60020 "Audio passthrough A/V sync"
-+#: system/settings/settings.xml
-+msgctxt "#60024"
-+msgid "Strong"
++msgid "Holds passthrough sound on the picture by nudging the speed of the audio clock, instead of skipping or repeating to correct the drift. Some receivers and TVs cannot follow a moving clock: if the sound crackles, clicks or drops out, turn this off."
 +msgstr ""
 +
 +#. Group label for the CoreELEC passthrough audio settings
@@ -63,30 +47,22 @@ index 3a5495f2c4..3f8796098e 100644
  #: xbmc/video/VideoDatabase.cpp
  msgctxt "#15011"
 diff --git a/system/settings/settings.xml b/system/settings/settings.xml
-index adb94b272d..981d19a09d 100755
+index 9880f0d5cf..c1ddb7e980 100755
 --- a/system/settings/settings.xml
 +++ b/system/settings/settings.xml
-@@ -4205,6 +4205,25 @@
+@@ -4278,6 +4278,17 @@
            <control type="toggle" />
          </setting>
        </group>
 +      <group id="2" label="60025">
-+        <setting id="coreelec.amlogic.audiolead" type="integer" label="60020" help="60021">
++        <setting id="coreelec.amlogic.audiopll" type="boolean" label="60020" help="60021">
 +          <requirement>HAVE_AMCODEC</requirement>
 +          <level>2</level>
-+          <default>50</default>
-+          <constraints>
-+            <options>
-+              <option label="351">0</option>
-+              <option label="60022">50</option>
-+              <option label="60023">200</option>
-+              <option label="60024">600</option>
-+            </options>
-+          </constraints>
++          <default>true</default>
 +          <dependencies>
 +            <dependency type="enable" setting="audiooutput.passthrough" operator="is">true</dependency>
 +          </dependencies>
-+          <control type="list" format="string" />
++          <control type="toggle" />
 +        </setting>
 +      </group>
      </category>
@@ -94,10 +70,10 @@ index adb94b272d..981d19a09d 100755
        <visible>false</visible>
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
 new file mode 100644
-index 0000000000..76a6e30952
+index 0000000000..81422e585e
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
-@@ -0,0 +1,722 @@
+@@ -0,0 +1,663 @@
 +/*
 + *  Copyright (C) 2026 Team CoreELEC
 + *
@@ -121,8 +97,6 @@ index 0000000000..76a6e30952
 +
 +namespace
 +{
-+constexpr const char* ENABLE_PATH = "/storage/.kodi/userdata/aml-audio-trim";
-+
 +//! Where the trim lives depends on which clock driver runs the SoC: the g12a
 +//! one trims mpll0 on g12a/g12b/sm1, the s7d one the HIFI PLL on the
 +//! S905X5M and the s6 one the HIFI PLL on the plain S905X5; any
@@ -158,17 +132,11 @@ index 0000000000..76a6e30952
 +//! kernel, which refuses more than forty.
 +constexpr double MAX_LEVEL_HW = 20.0;
 +
-+//! Where the offset loop is switched on, and how hard. The file holds the
-+//! largest rate error it may ask for, in parts per million; absent, the loop
-+//! only nulls the rate, which is what it did before this existed.
-+//!
-+//! Runtime rather than built in because the number is not ours to choose: it is
-+//! however much the receiver will follow without dropping lock, and that is a
-+//! property of the receiver. It has to be found by ear once, on the box.
-+
-+//! Sanity bounds on what that file may say.
-+constexpr double SLEW_MIN = 5e-6;
-+constexpr double SLEW_MAX = 600e-6;
++//! The largest rate error the offset loop may ask for while it walks an offset
++//! out. What a receiver follows without losing the sound is a property of the
++//! receiver: one behind a TV's eARC dropped the sound at hundreds of parts per
++//! million and never at fifty.
++constexpr double SLEW = 50e-6;
 +
 +//! How long the offset is given to decay. With the level handed straight to the
 +//! feedforward the rate is in place within a few ticks, so this really is the
@@ -281,18 +249,6 @@ index 0000000000..76a6e30952
 +  }
 +  catch (...)
 +  {
-+  }
-+}
-+
-+bool CAMLAudioTrim::Armed()
-+{
-+  try
-+  {
-+    return CSysfsPath{ENABLE_PATH}.Exists();
-+  }
-+  catch (...)
-+  {
-+    return false;
 +  }
 +}
 +
@@ -449,10 +405,7 @@ index 0000000000..76a6e30952
 +  return Aim() / STEP_RATE;
 +}
 +
-+//! The cap, in parts per million, or nullopt for a file that is not there or
-+//! does not say a usable number. Anything out of bounds is refused rather than
-+//! clamped: a file saying 6000 is a typo for 600, and honouring it as the
-+//! largest legal value would be reading a mistake as an instruction.
++//! The cap, or nullopt while the setting is off.
 +std::optional<double> CAMLAudioTrim::ReadSlew() const
 +{
 +  const auto component = CServiceBroker::GetSettingsComponent();
@@ -460,19 +413,10 @@ index 0000000000..76a6e30952
 +    return std::nullopt;
 +
 +  const auto settings = component->GetSettings();
-+  if (!settings)
++  if (!settings || !settings->GetBool(CSettings::SETTING_COREELEC_AMLOGIC_AUDIOPLL))
 +    return std::nullopt;
 +
-+  // Zero is off, and so is anything the loop cannot act on: the bounds are the
-+  // ones the setting is clamped to anyway, so a value outside them reads as off
-+  // rather than as a rate nobody meant.
-+  const double ppm =
-+      static_cast<double>(settings->GetInt(CSettings::SETTING_COREELEC_AMLOGIC_AUDIOLEAD));
-+  const double slew = std::abs(ppm) * 1e-6;
-+  if (!std::isfinite(slew) || slew < SLEW_MIN || slew > SLEW_MAX)
-+    return std::nullopt;
-+
-+  return slew;
++  return SLEW;
 +}
 +
 +void CAMLAudioTrim::Settle(double reading)
@@ -530,7 +474,7 @@ index 0000000000..76a6e30952
 +  // it would simply be integrated back out again.
 +  const double err = drift - aim;
 +
-+  // Off (audiolead 0: no slew, so Update() leaves the ceiling at zero). Nothing
++  // Off (the setting off: no slew, so Update() leaves the ceiling at zero). Nothing
 +  // is written, so there is no level to integrate and no answer to judge.
 +  if (m_levelMax <= 0.0)
 +  {
@@ -655,61 +599,35 @@ index 0000000000..76a6e30952
 +  if (!m_present)
 +    return;
 +
-+  // Looked for on the dither tick rather than every frame: this is a stat of a
-+  // file on the presenting thread, and a quarter second is soon enough to notice.
-+  if (now - m_lastDither >= DITHER && !Armed())
-+  {
-+    if (m_everWrote && m_applied != 0)
-+    {
-+      ForgetLocked();
-+      WriteLevel(0);
-+      m_want = 0.0;
-+      m_dither = 0.0;
-+    }
-+    m_lastDither = now;
-+    return;
-+  }
-+
-+  // Below the arming gate, so a disarmed loop does no file IO at all. Re-read
-+  // rather than latched: changing it mid playback is how the cap gets found.
++  // Re-read rather than latched, so turning the setting off takes effect mid
++  // playback.
 +  if (now - m_lastDither >= DITHER)
 +  {
 +    const std::optional<double> slew = ReadSlew();
++    const bool had = m_haveSlew;
++    m_haveSlew = slew.has_value();
++    m_slew = slew.value_or(0.0);
 +
-+    // Acted on only once it has said the same thing twice. The setting can move
-+    // under the loop while a slider is being dragged, and taking the first value
-+    // seen would otherwise dump the integrator and log a spurious
-+    // pair of on/off lines.
-+    if (slew == m_slewSeen)
-+    {
-+      const bool had = m_haveSlew;
-+      m_haveSlew = slew.has_value();
-+      m_slew = slew.value_or(0.0);
++    // Floored to a whole level. The clamp below rounds to an integer before
++    // applying it, so a fractional ceiling clamps a rounded level back to a
++    // fraction, the cast to int then truncates it, and the sigma-delta carry
++    // it did not pay off latches and is never paid off again.
++    // Off means the clock is not touched at all, not merely that the offset is
++    // left alone: with no ceiling the level is always zero, the write is skipped,
++    // and what remains is measurement.
++    m_levelMax = m_haveSlew
++                     ? std::floor(std::min(MAX_LEVEL_HW, MAX_LEVEL_RATE + m_slew / STEP_RATE))
++                     : 0.0;
 +
-+      // Floored to a whole level. The clamp below rounds to an integer before
-+      // applying it, so a fractional ceiling clamps a rounded level back to a
-+      // fraction, the cast to int then truncates it, and the sigma-delta carry
-+      // it did not pay off latches and is never paid off again.
-+      // Off means the clock is not touched at all, not merely that the offset is
-+      // left alone: with no ceiling the level is always zero, the write is skipped,
-+      // and what remains is measurement. That keeps the drift readings - cleaner
-+      // ones, since nothing is correcting underneath them - on hardware this has
-+      // never been tried on, without writing that hardware's audio clock.
-+      m_levelMax = m_haveSlew
-+                       ? std::floor(std::min(MAX_LEVEL_HW, MAX_LEVEL_RATE + m_slew / STEP_RATE))
-+                       : 0.0;
-+
-+      // Deliberately not clamping m_want here. Dropping the ceiling under a
-+      // wound-up level would step the rate by the whole difference at once, and
-+      // taking the file away is the documented kill switch - the one path that
-+      // must not itself be the most violent thing the loop ever does. With the
-+      // aim gone the integrator walks it back down within a few decisions, and
-+      // the per-tick limit in WriteLevel bounds how fast that reaches the clock.
-+      if (m_haveSlew != had)
-+        CLog::Log(LOGINFO, "CAMLAudioTrim: offset loop {}",
-+                  m_haveSlew ? fmt::format("on, up to {:+.0f}ppm", m_slew * 1e6) : "off");
-+    }
-+    m_slewSeen = slew;
++    // Deliberately not clamping m_want here. Dropping the ceiling under a
++    // wound-up level would step the rate by the whole difference at once, and
++    // turning the setting off must not itself be the most violent thing the
++    // loop ever does. With the aim gone the integrator walks it back down within
++    // a few decisions, and the per-tick limit in WriteLevel bounds how fast that
++    // reaches the clock.
++    if (m_haveSlew != had)
++      CLog::Log(LOGINFO, "CAMLAudioTrim: offset loop {}",
++                m_haveSlew ? fmt::format("on, up to {:+.0f}ppm", m_slew * 1e6) : "off");
 +  }
 +
 +  if (error)
@@ -801,15 +719,14 @@ index 0000000000..76a6e30952
 +
 +  // One level a tick. The dither already moves by exactly one, so this is
 +  // invisible in normal running; what it bounds is the ways the loop can be
-+  // asked to move the level far in one go - the ceiling dropping when the cap
-+  // file is taken away, an integrator that wound up while the register was being
++  // asked to move the level far in one go - the ceiling dropping when the
++  // setting is turned off, an integrator that wound up while the register was being
 +  // refused, or the register having been moved from outside. A rate
 +  // discontinuity is the one thing a receiver locked to this clock cannot be
 +  // asked to follow.
 +  //
-+  // Only this path. Release, a stand-down and a disarm all write zero directly
-+  // and are meant to: the first two mean the level must not outlive what asked
-+  // for it, and the third is a kill switch. Those go straight there.
++  // Only this path. Release and a stand-down write zero directly and are meant
++  // to: the level must not outlive what asked for it. Those go straight there.
 +  if (m_everWrote)
 +    put = std::clamp(put, static_cast<double>(m_applied) / STEP - 1.0,
 +                     static_cast<double>(m_applied) / STEP + 1.0);
@@ -822,10 +739,10 @@ index 0000000000..76a6e30952
 +}
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.h
 new file mode 100644
-index 0000000000..a6e7afd72d
+index 0000000000..50f71e7e79
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.h
-@@ -0,0 +1,135 @@
+@@ -0,0 +1,132 @@
 +/*
 + *  Copyright (C) 2026 Team CoreELEC
 + *
@@ -903,8 +820,6 @@ index 0000000000..a6e7afd72d
 +  CAMLAudioTrim(const CAMLAudioTrim&) = delete;
 +  CAMLAudioTrim& operator=(const CAMLAudioTrim&) = delete;
 +
-+  bool Armed();
-+
 +  //! \brief The rate error the loop should hold to walk the offset out. Zero
 +  //! when there is no offset to walk out, or nothing said how fast it may be.
 +  double Aim() const;
@@ -957,7 +872,6 @@ index 0000000000..a6e7afd72d
 +  bool m_haveLead{false};
 +
 +  double m_slew{0.0};         //!< the largest rate error the offset may ask for
-+  std::optional<double> m_slewSeen; //!< the previous read, to confirm a change
 +  bool m_haveSlew{false};     //!< whether the offset loop is switched on at all
 +  double m_levelMax{2.0};     //!< MAX_LEVEL_RATE, or more once it is
 +};
@@ -1348,7 +1262,7 @@ index 64c5138710..7e0445f2fe 100644
    {
      m_dataCache->SetAudioDecoderName(m_audioDecoderName);
 diff --git a/xbmc/cores/VideoPlayer/Process/ProcessInfo.h b/xbmc/cores/VideoPlayer/Process/ProcessInfo.h
-index 5055f2e740..cea0240de9 100644
+index 1ce5323c46..c93754c9a4 100644
 --- a/xbmc/cores/VideoPlayer/Process/ProcessInfo.h
 +++ b/xbmc/cores/VideoPlayer/Process/ProcessInfo.h
 @@ -97,6 +97,13 @@ public:
@@ -1365,7 +1279,7 @@ index 5055f2e740..cea0240de9 100644
    virtual bool AllowDTSHDDecode();
    virtual bool WantsRawPassthrough() { return false; }
  
-@@ -192,6 +199,7 @@ protected:
+@@ -193,6 +200,7 @@ protected:
    int m_audioQueueLevel = 0;
    int m_audioQueueDataLevel = 0;
    std::atomic<double> m_audioSyncError{DVD_NOPTS_VALUE};
@@ -1386,14 +1300,14 @@ index a10e01abe7..4e98146657 100644
        (m_audioSink.HasSyncError() && !m_audioSink.IsSyncErrorSaturated())
            ? m_audioSink.GetSyncErrorRaw() + m_pClock->GetVsyncAdjust()
 diff --git a/xbmc/settings/Settings.h b/xbmc/settings/Settings.h
-index 1c4ced5416..c378284f0f 100644
+index a32cb245f3..fc2bb58847 100644
 --- a/xbmc/settings/Settings.h
 +++ b/xbmc/settings/Settings.h
-@@ -479,6 +479,7 @@ public:
+@@ -486,6 +486,7 @@ public:
    static constexpr auto SETTING_COREELEC_AMLOGIC_DV2HDR = "coreelec.amlogic.dv2hdr";
    static constexpr auto SETTING_COREELEC_AMLOGIC_SDR2DV = "coreelec.amlogic.sdr2dv";
    static constexpr auto SETTING_COREELEC_AMLOGIC_HDR2DV = "coreelec.amlogic.hdr2dv";
-+  static constexpr auto SETTING_COREELEC_AMLOGIC_AUDIOLEAD = "coreelec.amlogic.audiolead";
++  static constexpr auto SETTING_COREELEC_AMLOGIC_AUDIOPLL = "coreelec.amlogic.audiopll";
    static constexpr auto SETTING_COREELEC_AMLOGIC_LIMIT_CD = "coreelec.amlogic.limitcd";
    static constexpr auto SETTING_COREELEC_AMLOGIC_FORCE_CS = "coreelec.amlogic.forcecs";
    static constexpr auto SETTING_COREELEC_AMLOGIC_DISABLEGUISCALING = "coreelec.amlogic.disableguiscaling";
@@ -1457,7 +1371,7 @@ index 4b32b87166..b3ec70f8a7 100644
  //! \brief The whole number of refreshes the display shows each frame for, from
  //! the refreshes per frame CRenderManager found matching (0 if none). Zero too
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
-index 3b42df9aeb..094d2da75c 100644
+index 3b42df9aeb..f3c1528622 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
 @@ -42,6 +42,7 @@
@@ -1475,7 +1389,7 @@ index 3b42df9aeb..094d2da75c 100644
 +  // The knob is a kernel module parameter that not every SoC's clock driver
 +  // carries. Without it the loop stands down, so the setting would sit there
 +  // offering a choice that changes nothing.
-+  setting = settings->GetSetting(CSettings::SETTING_COREELEC_AMLOGIC_AUDIOLEAD);
++  setting = settings->GetSetting(CSettings::SETTING_COREELEC_AMLOGIC_AUDIOPLL);
 +  if (setting)
 +    setting->SetVisible(CAMLAudioTrim::Supported());
 +

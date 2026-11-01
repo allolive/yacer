@@ -23,10 +23,10 @@ refresh rate change is queued.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/addons/resource.language.en_gb/resources/strings.po b/addons/resource.language.en_gb/resources/strings.po
-index 52a1cdf..568c400 100644
+index dd054609a9..a8921713e3 100644
 --- a/addons/resource.language.en_gb/resources/strings.po
 +++ b/addons/resource.language.en_gb/resources/strings.po
-@@ -9191,6 +9191,18 @@ msgctxt "#60025"
+@@ -9173,6 +9173,18 @@ msgctxt "#60025"
  msgid "Passthrough Audio"
  msgstr ""
  
@@ -46,10 +46,10 @@ index 52a1cdf..568c400 100644
  #: xbmc/video/VideoDatabase.cpp
  msgctxt "#15011"
 diff --git a/system/settings/settings.xml b/system/settings/settings.xml
-index 6bbb2de..8c032d5 100755
+index f4d61ceb3c..8a5a23dc8e 100755
 --- a/system/settings/settings.xml
 +++ b/system/settings/settings.xml
-@@ -4250,6 +4250,19 @@
+@@ -4279,6 +4279,19 @@
          </setting>
        </group>
        <group id="2" label="60025">
@@ -66,14 +66,14 @@ index 6bbb2de..8c032d5 100755
 +            <formatlabel>14046</formatlabel>
 +          </control>
 +        </setting>
-         <setting id="coreelec.amlogic.audiolead" type="integer" label="60020" help="60021">
+         <setting id="coreelec.amlogic.audiopll" type="boolean" label="60020" help="60021">
            <requirement>HAVE_AMCODEC</requirement>
            <level>2</level>
 diff --git a/xbmc/cores/VideoPlayer/Process/ProcessInfo.h b/xbmc/cores/VideoPlayer/Process/ProcessInfo.h
-index cea0240..71f1992 100644
+index c93754c9a4..13981ba47f 100644
 --- a/xbmc/cores/VideoPlayer/Process/ProcessInfo.h
 +++ b/xbmc/cores/VideoPlayer/Process/ProcessInfo.h
-@@ -149,6 +149,10 @@ public:
+@@ -150,6 +150,10 @@ public:
    void SetVideoRender(bool video);
    bool GetVideoRender();
    unsigned int GetMaxPassthroughOffSyncDuration() const;
@@ -84,7 +84,7 @@ index cea0240..71f1992 100644
  
    void SetPlayTimes(time_t start, int64_t current, int64_t min, int64_t max);
    int64_t GetMaxTime();
-@@ -220,6 +224,7 @@ protected:
+@@ -221,6 +225,7 @@ protected:
    std::atomic_int m_levelVQ;
    std::atomic_bool m_renderGuiLayer;
    std::atomic_bool m_renderVideoLayer;
@@ -93,7 +93,7 @@ index cea0240..71f1992 100644
    float m_newTempo;
    float m_speed;
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-index fc99cb3..a2ef36f 100644
+index d297da5bc3..6f38a5121a 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 @@ -1777,10 +1777,20 @@ void CVideoPlayer::Process()
@@ -121,7 +121,7 @@ index fc99cb3..a2ef36f 100644
      }
  
      // check if in an edit (cut or commercial break) that should be automatically skipped
-@@ -4766,8 +4776,40 @@ bool CVideoPlayer::PollResumePreroll()
+@@ -4763,8 +4773,40 @@ bool CVideoPlayer::PollResumePreroll()
    return false;
  }
  
@@ -162,7 +162,7 @@ index fc99cb3..a2ef36f 100644
    if ((state == CACHESTATE_PLAY || state == CACHESTATE_DONE) &&
        (m_caching == CACHESTATE_INIT || m_caching == CACHESTATE_FULL) &&
        HoldForSubtitleTranslation())
-@@ -7454,6 +7496,8 @@ void CVideoPlayer::UpdateVideoRender(bool video)
+@@ -7486,6 +7528,8 @@ void CVideoPlayer::UpdateVideoRender(bool video)
  void CVideoPlayer::OnLostDisplay()
  {
    CLog::Log(LOGINFO, "VideoPlayer: OnLostDisplay received");
@@ -171,7 +171,7 @@ index fc99cb3..a2ef36f 100644
    if (m_VideoPlayerAudio->IsInited())
      m_VideoPlayerAudio->SendMessage(std::make_shared<CDVDMsgBool>(CDVDMsg::GENERAL_PAUSE, true), 1);
    if (m_VideoPlayerVideo->IsInited())
-@@ -7470,6 +7514,21 @@ void CVideoPlayer::OnResetDisplay()
+@@ -7502,6 +7546,21 @@ void CVideoPlayer::OnResetDisplay()
      return;
  
    CLog::Log(LOGINFO, "VideoPlayer: OnResetDisplay received");
@@ -194,7 +194,7 @@ index fc99cb3..a2ef36f 100644
    m_VideoPlayerVideo->SendMessage(std::make_shared<CDVDMsgBool>(CDVDMsg::GENERAL_PAUSE, false), 1);
    m_clock.Pause(false);
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.h b/xbmc/cores/VideoPlayer/VideoPlayer.h
-index f8a6a6a..ef9aa03 100644
+index 149a7a5ca2..33a7678a8f 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.h
 @@ -405,6 +405,9 @@ public:
@@ -207,7 +207,7 @@ index f8a6a6a..ef9aa03 100644
  
    bool IsCaching() const override;
    int GetCacheLevel() const override;
-@@ -734,6 +737,11 @@ protected:
+@@ -736,6 +739,11 @@ protected:
    bool m_updateStreamDetails{false};
  
    std::atomic<bool> m_displayLost;
@@ -220,7 +220,7 @@ index f8a6a6a..ef9aa03 100644
    double m_messageQueueTimeSize{0.0};
  };
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-index 2290a56..490b52c 100644
+index 2290a56ba7..490b52c7f5 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 @@ -1146,6 +1146,15 @@ void CRenderManager::UpdateResolution()
@@ -240,7 +240,7 @@ index 2290a56..490b52c 100644
  {
    if (width)
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
-index 4ea46d9..9edcaf3 100644
+index 4ea46d9588..9edcaf3067 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
 @@ -81,6 +81,8 @@ public:
@@ -262,13 +262,13 @@ index 4ea46d9..9edcaf3 100644
    bool m_renderedDebugOverlay = false;
    bool m_renderDebug = false;
 diff --git a/xbmc/settings/Settings.h b/xbmc/settings/Settings.h
-index dceda3b..10ab89a 100644
+index fc2bb58847..0f2b3ec713 100644
 --- a/xbmc/settings/Settings.h
 +++ b/xbmc/settings/Settings.h
 @@ -487,6 +487,7 @@ public:
    static constexpr auto SETTING_COREELEC_AMLOGIC_SDR2DV = "coreelec.amlogic.sdr2dv";
    static constexpr auto SETTING_COREELEC_AMLOGIC_HDR2DV = "coreelec.amlogic.hdr2dv";
-   static constexpr auto SETTING_COREELEC_AMLOGIC_AUDIOLEAD = "coreelec.amlogic.audiolead";
+   static constexpr auto SETTING_COREELEC_AMLOGIC_AUDIOPLL = "coreelec.amlogic.audiopll";
 +  static constexpr auto SETTING_COREELEC_AMLOGIC_DISPLAYRELOCK = "coreelec.amlogic.displayrelock";
    static constexpr auto SETTING_COREELEC_AMLOGIC_LIMIT_CD = "coreelec.amlogic.limitcd";
    static constexpr auto SETTING_COREELEC_AMLOGIC_FORCE_CS = "coreelec.amlogic.forcecs";

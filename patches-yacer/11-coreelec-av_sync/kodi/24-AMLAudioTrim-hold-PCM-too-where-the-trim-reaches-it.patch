@@ -18,52 +18,37 @@ the jumps a drift never makes.
 One per-SoC table gives both the trim node and whether it reaches PCM
 (CAMLAudioTrim::ReachesPcm()), so the two cannot disagree. The flag that
 gives the trim back on the way out is m_trimEngaged, as it no longer means
-passthrough. The setting loses "passthrough" from its name, its help
-says where it reaches PCM, and it is no longer greyed out while
-passthrough is off.
+passthrough. The setting's help says where it reaches PCM, and it is no
+longer greyed out while passthrough is off.
 
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 --- a/addons/resource.language.en_gb/resources/strings.po
 +++ b/addons/resource.language.en_gb/resources/strings.po
-@@ -9158,28 +9158,28 @@
- #. Setting to trim the audio clock so sound and picture stay aligned
- #: system/settings/settings.xml
- msgctxt "#60020"
--msgid "Audio passthrough A/V sync"
-+msgid "Audio A/V sync"
- msgstr ""
- 
--#. Help text of setting with label #60020 "Audio passthrough A/V sync"
-+#. Help text of setting with label #60020 "Audio A/V sync"
+@@ -9164,7 +9164,7 @@ msgstr ""
+ #. Help text of setting with label #60020 "Audio PLL trimming"
  #: system/settings/settings.xml
  msgctxt "#60021"
--msgid "Corrects a standing offset between sound and picture by gently trimming the audio clock. Stronger settings clear a large drift sooner, though never more accurately, and make no difference to small ones. Some receivers and DACs will not follow a shifted clock - if yours clicks, mutes or drops out, choose a lower strength or turn it off. Has no effect on PCM output."
-+msgid "Corrects a standing offset between sound and picture by gently trimming the audio clock. Stronger settings clear a large drift sooner, though never more accurately, and make no difference to small ones. Some receivers and DACs will not follow a shifted clock - if yours clicks, mutes or drops out, choose a lower strength or turn it off. On S905X5 boxes it holds PCM output too; on older ones only passthrough."
+-msgid "Holds passthrough sound on the picture by nudging the speed of the audio clock, instead of skipping or repeating to correct the drift. Some receivers and TVs cannot follow a moving clock: if the sound crackles, clicks or drops out, turn this off."
++msgid "Holds the sound on the picture by nudging the speed of the audio clock, instead of skipping or repeating to correct the drift. On S905X5 boxes it holds decoded sound too; on older ones only passthrough. Some receivers and TVs cannot follow a moving clock: if the sound crackles, clicks or drops out, turn this off."
  msgstr ""
  
--#. Option for setting #60020 "Audio passthrough A/V sync"
-+#. Option for setting #60020 "Audio A/V sync"
- #: system/settings/settings.xml
- msgctxt "#60022"
- msgid "Light"
- msgstr ""
- 
--#. Option for setting #60020 "Audio passthrough A/V sync"
-+#. Option for setting #60020 "Audio A/V sync"
- #: system/settings/settings.xml
- msgctxt "#60023"
- msgid "Medium"
- msgstr ""
- 
--#. Option for setting #60020 "Audio passthrough A/V sync"
-+#. Option for setting #60020 "Audio A/V sync"
- #: system/settings/settings.xml
- msgctxt "#60024"
- msgid "Strong"
+ #. Group label for the CoreELEC passthrough audio settings
+--- a/system/settings/settings.xml
++++ b/system/settings/settings.xml
+@@ -4283,9 +4283,6 @@
+           <requirement>HAVE_AMCODEC</requirement>
+           <level>2</level>
+           <default>true</default>
+-          <dependencies>
+-            <dependency type="enable" setting="audiooutput.passthrough" operator="is">true</dependency>
+-          </dependencies>
+           <control type="toggle" />
+         </setting>
+       </group>
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
-@@ -29,20 +29,34 @@
+@@ -27,20 +27,34 @@ namespace
  //! other or unidentified SoC keeps the g12a node, as before. Chosen by SoC and
  //! not by which node exists, because a kernel with both drivers built in
  //! registers both nodes whether or not their driver ever probed.
@@ -104,7 +89,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  }
  
  //! The g12a driver's mpll0 ignores the field's low bit and rounds up, so a step
-@@ -232,6 +246,11 @@
+@@ -212,6 +226,11 @@ bool CAMLAudioTrim::Supported()
    }
  }
  
@@ -129,7 +114,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  //!
  //! So the rate is corrected where it is made. The kernel exposes the divider's
  //! sigma-delta field a step at a time; a step is far larger than the error, so
-@@ -46,6 +48,9 @@
+@@ -46,6 +48,9 @@ public:
    //! \brief Whether this kernel carries the trim knob at all.
    static bool Supported();
  
@@ -141,7 +126,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
    //! when nothing measured it this frame. Must be the unscaled figure: this is a
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-@@ -2781,7 +2781,7 @@
+@@ -2781,7 +2781,7 @@ void CAMLCodec::CloseDecoder()
    }
    dumpfile_close(am_private);
    m_opened = false;
@@ -150,7 +135,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  
    // After m_opened, so a frame still queued in the renderer cannot tick this
    // back to life: the measured path belongs to this decoder, and whatever plays
-@@ -3313,25 +3313,27 @@
+@@ -3313,25 +3313,27 @@ void CAMLCodec::LatencyTick(uint64_t omxPts)
    CAMLLatency::GetInstance().Update(*clock, omxPts, m_processInfo.GetVideoFps(), audioError,
                                      m_processInfo.IsRenderClockSync());
  
@@ -191,7 +176,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
    // Kodi's audio offset does not touch the audio at all: SetAVDelay feeds
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
-@@ -146,9 +146,9 @@
+@@ -146,9 +146,9 @@ private:
  
    DllLibAmCodec   *m_dll;
    std::atomic<bool> m_opened;
@@ -204,15 +189,3 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
    double           m_lastAudioOffset{0.0};
    bool             m_offsetStoodDown{false};
    bool             m_drain = false;
---- a/system/settings/settings.xml
-+++ b/system/settings/settings.xml
-@@ -4262,9 +4262,6 @@
-               <option label="60024">600</option>
-             </options>
-           </constraints>
--          <dependencies>
--            <dependency type="enable" setting="audiooutput.passthrough" operator="is">true</dependency>
--          </dependencies>
-           <control type="list" format="string" />
-         </setting>
-       </group>

@@ -18,7 +18,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
-@@ -162,6 +162,13 @@
+@@ -154,6 +154,13 @@ constexpr double MAX_PLAUSIBLE = 200e-6;
  //! leaves - a step's worth of rate for this long - is microseconds.
  constexpr double DITHER = 0.25 * DVD_TIME_BASE;
  
@@ -32,7 +32,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  //! Given up after this many writes the clock would not take. Something else owns
  //! it, and asking four times a second forever helps nobody.
  constexpr unsigned int MAX_REFUSED = 5;
-@@ -336,6 +343,7 @@
+@@ -316,6 +323,7 @@ void CAMLAudioTrim::Release()
  
    m_want = 0.0;
    m_dither = 0.0;
@@ -40,7 +40,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  
    // A refusal or a stand-down belongs to the playback that provoked it. One
    // stream the knob could not reach, or a handful of writes refused while the
-@@ -516,6 +524,7 @@
+@@ -484,6 +492,7 @@ void CAMLAudioTrim::Settle(double reading)
                drift * 1e6, m_clamped);
      m_want = 0.0;
      m_dither = 0.0;
@@ -48,15 +48,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
      if (m_everWrote && m_applied != 0)
        WriteLevel(0);
      m_stopped = true;
-@@ -590,6 +599,7 @@
-       WriteLevel(0);
-       m_want = 0.0;
-       m_dither = 0.0;
-+      m_level = 0.0;
-     }
-     m_lastDither = now;
-     return;
-@@ -698,8 +708,9 @@
+@@ -640,8 +649,9 @@ void CAMLAudioTrim::Update(const std::optional<double>& error,
    // Sigma-delta: the fraction the level cannot express is carried and paid off
    // by the next slot that can, so the average over a few slots is the wanted
    // level even though every slot is a whole one.
@@ -70,7 +62,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
    // level already at the limit half a step past it, and the kernel refuses the
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.h
-@@ -109,6 +109,7 @@
+@@ -107,6 +107,7 @@ private:
    int m_applied{0};           //!< what the register was last set to
    double m_want{0.0};         //!< the level the loop wants, in steps, fractional
    double m_dither{0.0};       //!< carries the fraction between dither slots

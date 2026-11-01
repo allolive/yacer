@@ -25,7 +25,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
-@@ -198,6 +198,12 @@ CAMLAudioTrim::~CAMLAudioTrim()
+@@ -190,6 +190,12 @@ CAMLAudioTrim::~CAMLAudioTrim()
    }
  }
  
@@ -35,7 +35,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 +  return m_checked && m_present && m_haveSlew && m_haveLead && !m_stopped;
 +}
 +
- bool CAMLAudioTrim::Armed()
+ std::optional<int> CAMLAudioTrim::ReadLevel() const
  {
    try
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.h
@@ -54,7 +54,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  private:
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-@@ -3331,9 +3331,11 @@ void CAMLCodec::LatencyTick(uint64_t omx
+@@ -3331,9 +3331,11 @@ void CAMLCodec::LatencyTick(uint64_t omxPts)
      if (m_trimEngaged)
        CAMLAudioTrim::GetInstance().Release();
      m_trimEngaged = false;
@@ -79,7 +79,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  
    virtual bool AllowDTSHDDecode();
    virtual bool WantsRawPassthrough() { return false; }
-@@ -204,6 +208,7 @@ protected:
+@@ -205,6 +209,7 @@ protected:
    int m_audioQueueDataLevel = 0;
    std::atomic<double> m_audioSyncError{DVD_NOPTS_VALUE};
    std::atomic<bool> m_audioPassthrough{false};
@@ -89,7 +89,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
    // player subtitle info
 --- a/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
-@@ -120,6 +120,10 @@ void CVideoPlayerAudio::OpenStream(CDVDS
+@@ -120,6 +120,10 @@ void CVideoPlayerAudio::OpenStream(CDVDStreamInfo& hints, std::unique_ptr<CDVDAu
    /* store our stream hints */
    m_streaminfo = hints;
  
@@ -100,7 +100,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
    /* update codec information from what codec gave out, if any */
    int channelsFromCodec   = m_pAudioCodec->GetFormat().m_channelLayout.Count();
    int samplerateFromCodec = m_pAudioCodec->GetFormat().m_sampleRate;
-@@ -828,7 +832,19 @@ bool CVideoPlayerAudio::ProcessDecoderOu
+@@ -828,7 +832,19 @@ bool CVideoPlayerAudio::ProcessDecoderOutput(DVDAudioFrame &audioframe)
                           m_pClock->GetVsyncAdjust() == 0.0 && m_pClock->GetSpeedAdjust() == 0.0 &&
                           m_rawAcquisition.WithinMagnitude(errorRaw);
  

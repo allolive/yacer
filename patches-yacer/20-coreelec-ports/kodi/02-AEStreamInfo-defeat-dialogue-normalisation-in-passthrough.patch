@@ -27,10 +27,10 @@ Co-authored-by: pannal <1359593+pannal@users.noreply.github.com>
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 
 diff --git a/addons/resource.language.en_gb/resources/strings.po b/addons/resource.language.en_gb/resources/strings.po
-index 688aa4d11f..86cfa04dc3 100644
+index 393c415b8c..a9b710325b 100644
 --- a/addons/resource.language.en_gb/resources/strings.po
 +++ b/addons/resource.language.en_gb/resources/strings.po
-@@ -26293,3 +26293,34 @@ msgstr ""
+@@ -26587,3 +26587,34 @@ msgstr ""
  msgctxt "#40804"
  msgid "{0:.1f} dB"
  msgstr ""
@@ -66,12 +66,12 @@ index 688aa4d11f..86cfa04dc3 100644
 +msgstr ""
 +
 diff --git a/system/settings/settings.xml b/system/settings/settings.xml
-index 752f788c00..e8c149f3ee 100755
+index cadb8f5e80..e3d7de17b6 100755
 --- a/system/settings/settings.xml
 +++ b/system/settings/settings.xml
-@@ -4278,6 +4278,25 @@
-           </constraints>
-           <control type="list" format="string" />
+@@ -4356,6 +4356,25 @@
+           <default>true</default>
+           <control type="toggle" />
          </setting>
 +        <setting id="coreelec.audio.dialnormdefeat" type="list[integer]" label="60050" help="60051">
 +          <level>2</level>
@@ -96,7 +96,7 @@ index 752f788c00..e8c149f3ee 100755
      </category>
      <category id="cache" label="439" help="36399">
 diff --git a/xbmc/cores/AudioEngine/Utils/AEStreamInfo.cpp b/xbmc/cores/AudioEngine/Utils/AEStreamInfo.cpp
-index d30cf8e0f0..5cdd22ca97 100644
+index 9e7f72f15e..2ba084a11c 100644
 --- a/xbmc/cores/AudioEngine/Utils/AEStreamInfo.cpp
 +++ b/xbmc/cores/AudioEngine/Utils/AEStreamInfo.cpp
 @@ -218,6 +218,18 @@ void CAEStreamParser::GetPacket(uint8_t** buffer, unsigned int* bufferSize)
@@ -572,7 +572,7 @@ index d30cf8e0f0..5cdd22ca97 100644
  bool CAEStreamParser::TrySyncAC3(uint8_t* data,
                                   unsigned int size,
                                   bool resyncing,
-@@ -789,6 +1248,19 @@ unsigned int CAEStreamParser::SyncTrueHD(uint8_t* data, unsigned int size)
+@@ -805,6 +1264,19 @@ unsigned int CAEStreamParser::SyncTrueHD(uint8_t* data, unsigned int size)
        if (((data[4 + major_sync_size - 1] << 8) | data[4 + major_sync_size - 2]) != crc)
          continue;
  
@@ -593,7 +593,7 @@ index d30cf8e0f0..5cdd22ca97 100644
        m_info.m_sampleRate = (rate & 0x8 ? 44100 : 48000) << (rate & 0x7);
        m_substreams = (data[20] & 0xF0) >> 4;
 diff --git a/xbmc/cores/AudioEngine/Utils/AEStreamInfo.h b/xbmc/cores/AudioEngine/Utils/AEStreamInfo.h
-index acfa77d987..562e5b61c9 100644
+index 4840ac7f80..56767e6fa4 100644
 --- a/xbmc/cores/AudioEngine/Utils/AEStreamInfo.h
 +++ b/xbmc/cores/AudioEngine/Utils/AEStreamInfo.h
 @@ -58,6 +58,9 @@ public:
@@ -616,7 +616,7 @@ index acfa77d987..562e5b61c9 100644
    unsigned int m_needBytes = 0;
    ParseFunc m_syncFunc;
    bool m_hasSync = false;
-@@ -91,6 +97,8 @@ private:
+@@ -92,6 +98,8 @@ private:
    AVCRC m_crcTrueHD[1024];  /* TrueHD crc table */
  
    void GetPacket(uint8_t **buffer, unsigned int *bufferSize);
@@ -626,7 +626,7 @@ index acfa77d987..562e5b61c9 100644
    bool TrySyncAC3(uint8_t *data, unsigned int size, bool resyncing, bool wantEAC3dependent);
    unsigned int SyncAC3(uint8_t *data, unsigned int size);
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Audio/DVDAudioCodecPassthrough.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Audio/DVDAudioCodecPassthrough.cpp
-index 5b68af0679..f8527266ea 100644
+index be32e5f4fa..cee71c749e 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Audio/DVDAudioCodecPassthrough.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Audio/DVDAudioCodecPassthrough.cpp
 @@ -9,7 +9,11 @@
@@ -669,10 +669,10 @@ index 5b68af0679..f8527266ea 100644
    {
      case CAEStreamInfo::STREAM_TYPE_AC3:
 diff --git a/xbmc/settings/Settings.h b/xbmc/settings/Settings.h
-index 90263e42c0..b6560f48b2 100644
+index c5a4e46bcf..8bc74e9290 100644
 --- a/xbmc/settings/Settings.h
 +++ b/xbmc/settings/Settings.h
-@@ -432,6 +432,7 @@ public:
+@@ -439,6 +439,7 @@ public:
    static constexpr auto SETTING_AUDIOOUTPUT_TRUEHDPASSTHROUGH = "audiooutput.truehdpassthrough";
    static constexpr auto SETTING_AUDIOOUTPUT_DTSHDPASSTHROUGH = "audiooutput.dtshdpassthrough";
    static constexpr auto SETTING_AUDIOOUTPUT_DTSHDCOREFALLBACK = "audiooutput.dtshdcorefallback";
