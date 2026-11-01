@@ -20,8 +20,12 @@ name: YACER pull request checks
 
 on:
   pull_request:
-    branches: [ yacer ]
+    branches: [ main ]
     types: [ opened, synchronize, reopened, labeled ]
+
+env:
+  # the CoreELEC mirror the builds are pinned to (scripts/yacer-mirror.sh)
+  MIRROR_REPO: allolive/CoreELEC
 
 permissions:
   contents: read
@@ -57,6 +61,7 @@ jobs:
 
       - uses: actions/checkout@v7
         with:
+          repository: ${{ env.MIRROR_REPO }}
           ref: ${{ steps.pin.outputs.sha }}
           path: CoreELEC
           fetch-depth: 1
@@ -105,7 +110,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          gh workflow run yacer-build.yml --repo "${{ github.repository }}" --ref yacer \
+          gh workflow run yacer-build.yml --repo "${{ github.repository }}" --ref main \
             -f yacer="$HEAD_SHA" -f check=true -f pr="${{ github.event.pull_request.number }}"
           echo "build of ${HEAD_SHA:0:10} queued; it reports as yacer/build on the pull request" \
             | tee -a "$GITHUB_STEP_SUMMARY"

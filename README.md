@@ -1,78 +1,61 @@
 # Yet Another CoreELEC Repo
 
-Unofficial CoreELEC builds for Amlogic devices.
+Test builds of [CoreELEC](https://coreelec.org) for one box, the **Ugoos AM9
+Pro** (S905X5), with a few features its HDMI 2.1 output makes possible.
 
-> **Tracks the CoreELEC 22.0 nightly tree, with a few patches added on top.**
-> Builds install like any CoreELEC update - copy the `.tar` to your box's
-> `.update` share and reboot. Each release lists what changed since the one
-> before it. This is not an official CoreELEC release and carries no warranty:
-> you install it at your own risk.
+> Everything here stands on other people's work. CoreELEC brings Kodi to
+> Amlogic boxes: the kernel, the video and display drivers, the Dolby Vision
+> and HDR output, the settings and the update system.
+> [LibreELEC](https://libreelec.tv) built the system and the build tree
+> CoreELEC grew from, and [Kodi](https://kodi.tv) is the player. These builds
+> are CoreELEC 22 with some patches on top, rebuilt whenever it moves.
 
-## Why use these builds instead of an official one
+**[Guides](https://github.com/allolive/yacer/wiki)** - what the builds add and
+how to set it up. **[Change list](https://allolive.github.io/yacer/)** - every
+difference from CoreELEC, patch by patch.
 
-Only for the patches added on top. Everything else is CoreELEC exactly as they
-ship it, built from their nightly tree. If none of those matter to you, take an
-[official release](https://coreelec.org) - it is the same software with fewer
-moving parts.
+## One box, test builds
 
-**[What these builds change](https://allolive.github.io/CoreELEC/)** - the list
-of patches as they stand now.
+- **Tested on the Ugoos AM9 Pro only.** The image is CoreELEC's own
+  `Amlogic-no.aarch64` one, so it starts on other Amlogic boxes too, but
+  nothing is tested there and nothing is supported.
+- **Test builds, made by one person.** Any build can break something that
+  worked in the one before. Every build stays downloadable, and an earlier one
+  is always there to go back to.
+- **Not an official CoreELEC release**, and no warranty: install at your own
+  risk. A problem with these builds belongs in
+  [this repository's issues](https://github.com/allolive/yacer/issues), not with
+  CoreELEC, who did not write the code that changed.
 
-## Which devices
+Update tars only; fresh-flash images are not published. Start from an
+[official CoreELEC release](https://coreelec.org), then copy the `.tar` from
+any [release](https://github.com/allolive/yacer/releases) here to the box's
+`.update` share and reboot. After that, *Settings > CoreELEC > Updates* offers
+the `YACER-22` channel: set *Automatic Updates* to `auto` and new builds arrive
+like CoreELEC's own, or pick any build, an older one included, under
+*Available Versions*.
 
-Each build is the standard `Amlogic-no.aarch64` update tar - the same one
-upstream ships - so it runs on any **Amlogic** box CoreELEC 22 supports:
-S905X/X2/X3/X4/X5, S912, S922X/A311D, S928X and the rest of the `Amlogic-no`
-family. The device tree is chosen per box at boot, so nothing here is tied to a
-particular model. Built and tested on a Ugoos AM6B Plus (S922X-J); every other
-board gets the same image and no specific attention. Audio sync is narrower than
-the rest - it needs a kernel change that exists only on g12a, g12b and sm1.
+## How the builds are made
 
-Not for Raspberry Pi, Rockchip, Allwinner or a PC - CoreELEC is Amlogic only.
-
-Update tars only; fresh-flash images are not published. To start from nothing,
-install an [official CoreELEC release](https://coreelec.org) first, then apply a
-build from here on top.
-
-## Updating
-
-Copy the `.tar` from any release to the `.update` share and reboot - the same
-way an official update is applied.
-
-Or let the box do it. In **Settings -> CoreELEC -> Updates**:
-
-- **Update Channel** - `YACER-22` is offered without any custom-channel setup.
-  Trains the box cannot move to are not listed.
-- **Automatic Updates** - set to `auto` and the box installs each new build as
-  it appears, checking this repository rather than the official update server.
-- **Available Versions** - pick a specific build by hand, including an older one.
-
-## Branches
-
-- **`coreelec-22`** — an exact mirror of `CoreELEC/CoreELEC`. Nothing of this
-  repository's own work is committed there. It is force-pushed to follow upstream wherever they go,
-  including across a history rewrite.
-- **`yacer`** — this branch. It shares no history with the mirror and holds only
-  the files added or replaced.
-
-The build checks out the CoreELEC commit named in **`coreelec.pin`**, lays this
-branch over the top, and builds the result. These files are never replayed onto
-upstream, so an upstream rewrite cannot conflict with them.
+This repository holds only what is added to CoreELEC. A build checks out the
+CoreELEC commit named in **`coreelec.pin`** from
+[allolive/CoreELEC](https://github.com/allolive/CoreELEC), a plain mirror of
+`CoreELEC/CoreELEC`, lays this repository over it, and builds the result.
+Nothing is replayed onto upstream, so an upstream rewrite cannot conflict with
+it.
 
 The pin moves only when the new upstream is known to work with these patches.
 Every day the upstream sync mirrors `CoreELEC/CoreELEC` and, when its tip is
-not the pinned commit, validates it: every package's patch stack applies, the
-native tests pass, and a full build succeeds. That build then commits the new
-pin to this branch and is published. Each candidate is kept as a
-`coreelec-candidate/<sha>` tag while it is validated, and each pinned commit as
-a `coreelec-pin/<sha>` tag, so an upstream force-push cannot take them away. Until
-then every build keeps using the last CoreELEC that worked, instead of failing
-because upstream moved under the patches. A change that needs a newer upstream
-(re-anchoring the patches, say) moves the pin itself, in the same commit.
+not the pinned commit, validates it: every package's patch stack applies and
+the native tests pass. It then commits the new pin here. The mirror keeps each
+candidate as a `coreelec-candidate/<sha>` tag while it is validated, and each
+pinned commit as a `coreelec-pin/<sha>` tag, so an upstream force-push cannot
+take them away. Until then every build keeps using the last CoreELEC that
+worked. A change that needs a newer upstream (re-anchoring the patches, say)
+moves the pin itself, in the same commit.
 
-Locally, `scripts/yacer-local.sh apply` refuses a CoreELEC checkout that is not
-at the pinned commit (`git checkout --detach $(cat coreelec.pin)`), so a local
-build is the tree CI builds.
+The workflows write to the mirror with its deploy key, stored here as the
+`MIRROR_DEPLOY_KEY` secret (`scripts/yacer-mirror.sh`).
 
 ## Layout
 
@@ -81,7 +64,7 @@ build is the tree CI builds.
   group is Amlogic-specific, and `yacer-` is for these builds alone. Hardening leads each
   family. Each group carries a `README.md`: its heading names the group and the
   text under it says what the patches are for, which is what the
-  [change list](https://allolive.github.io/CoreELEC/) shows above them. Without
+  [change list](https://allolive.github.io/yacer/) shows above them. Without
   one a group is named after its directory and shown bare.
 
   A patch is numbered within its group — `01`, `02` — and assembly composes the
@@ -102,24 +85,27 @@ These patches are applied exactly the way upstream's are, and show up in the
 build log as `(yacer)` so it is clear which is which.
 
 Each patch's subject and message are what the
-[change list](https://allolive.github.io/CoreELEC/) shows, so write them for
+[change list](https://allolive.github.io/yacer/) shows, so write them for
 the people installing the build. `scripts/yacer-changes.py` builds that page
 locally; `.github/workflows/yacer-docs.yml` publishes it whenever a patch
 changes, without committing anything or starting a build.
 
 ## Building locally
 
-Two checkouts of the same repository, so the branch can be edited while the build
+Two checkouts side by side, so this repository can be edited while the build
 tree stays a build tree:
 
-    ~/Documents/coreelec/CoreELEC    the coreelec branches - the build tree
-    ~/Documents/coreelec/CoreELEC-yacer  this branch - where the patches live
+    ~/Documents/coreelec/CoreELEC        allolive/CoreELEC - the build tree
+    ~/Documents/coreelec/CoreELEC-yacer  this repository - where the patches live
 
-    git -C CoreELEC worktree add ../CoreELEC-yacer yacer     # once
+The build tree has to hold the pinned commit:
 
-Write patches in the `yacer` checkout. Then, in the CoreELEC checkout:
+    git -C CoreELEC fetch origin refs/tags/coreelec-pin/$(cat CoreELEC-yacer/coreelec.pin)
+    git -C CoreELEC checkout --detach $(cat CoreELEC-yacer/coreelec.pin)
 
-    ../CoreELEC-yacer/scripts/yacer-local.sh apply         # lay the branch over the tree
+Then, in the CoreELEC checkout:
+
+    ../CoreELEC-yacer/scripts/yacer-local.sh apply         # lay this repository over the tree
     ../CoreELEC-yacer/scripts/yacer-build-local.sh        # build it
     ../CoreELEC-yacer/scripts/yacer-local.sh revert       # back to a plain mirror
 

@@ -1,28 +1,29 @@
 #!/usr/bin/env bash
 #
-# Assemble the yacer branch into this checkout for a local build, and take it
+# Assemble this repository into a CoreELEC checkout for a local build, and take it
 # back out again afterwards.
 #
 # CI builds a throwaway tree: check out the mirror, copy our files over it, go.
 # Locally there is one clone and it has to keep working as a checkout of the
 # mirror in between, so the same assembly has to be reversible.
 #
-#   yacer-local.sh apply    lay the yacer branch over this checkout
+#   yacer-local.sh apply    lay this repository over the CoreELEC checkout
 #   yacer-local.sh revert    take it back out
 #   yacer-local.sh status    say which state the checkout is in
 #
-# Run from the root of the CoreELEC clone. The branch is taken from its own
-# working copy when one is checked out, so an edit can be built without being
-# committed first; otherwise it is read out of this repository. Either way apply
+# Run from the root of the CoreELEC clone. The files are taken from the working
+# copy this script is in, so an edit can be built without being committed
+# first; YACER_SOURCE=git takes the last commit instead. Either way apply
 # keeps a copy of what it laid down, and revert removes exactly that - these
 # files are untracked here, so git holds nothing to restore them from.
 set -euo pipefail
 
-BRANCH=${YACER_BRANCH:-yacer}
+# this repository: the checkout this script is in
+YACER_REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 STATE=.yacer-local-state
 SRCSAVE=.yacer-local-source
 
-# What the branch assembles from: its directories, and the pin naming the
+# What yacer assembles from: its directories, and the pin naming the
 # CoreELEC commit they are written against. Where our patches go in the build
 # tree, how each file is placed, and what makes a valid set of them are in
 # scripts/yacer-patches.sh, shared with the CI assembler.
@@ -45,7 +46,7 @@ copy_src() {
 }
 
 [ -d .git ] || die "run this from the root of the CoreELEC clone"
-git rev-parse --verify --quiet "$BRANCH" >/dev/null || die "no $BRANCH branch in this clone"
+git -C "$YACER_REPO" rev-parse --verify --quiet HEAD >/dev/null || die "$YACER_REPO is not a git checkout"
 
 cmd=${1:-status}
 
@@ -53,7 +54,7 @@ case "$cmd" in
 status)
   if [ -f "$STATE" ]; then
     echo "applied: $(grep -c '^file ' "$STATE" || true) file(s), $(grep -c '^patch ' "$STATE" || true) tree-patch(es)"
-    echo "from $BRANCH @ $(sed -n 's/^commit //p' "$STATE")"
+    echo "from yacer @ $(sed -n 's/^commit //p' "$STATE")"
   else
     echo "clean: this is a plain checkout of the mirror"
   fi
@@ -62,37 +63,32 @@ status)
 apply)
   [ -f "$STATE" ] && die "already applied - run 'revert' first"
   tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
-  commit=$(git rev-parse "$BRANCH")
+  commit=$(git -C "$YACER_REPO" rev-parse HEAD)
 
-  # Prefer the branch's own working copy, so a patch can be built without being
-  # committed first. YACER_SOURCE=git forces the committed tree instead.
+  # The working copy, so a patch can be built without being committed first.
+  # YACER_SOURCE=git forces the committed tree instead.
   src=""
   if [ "${YACER_SOURCE:-}" != "git" ]; then
-    src=$(git worktree list --porcelain \
-          | awk -v b="refs/heads/$BRANCH" '/^worktree /{w=$2} $0=="branch "b{print w}' \
-          | head -1)
-    if [ -n "$src" ] && [ ! -d "$src/patches-yacer" ] && [ ! -d "$src/overlay" ]; then
-      src=""
-    fi
+    src=$YACER_REPO
   fi
   if [ -n "$src" ]; then
     copy_src "$src" "$tmp" || die "cannot read $src"
     if git -C "$src" diff --quiet HEAD -- $SRCDIRS 2>/dev/null; then
-      origin="$BRANCH @ ${commit:0:9}"
+      origin="yacer @ ${commit:0:9}"
     else
-      origin="$BRANCH @ ${commit:0:9} plus uncommitted edits"
+      origin="yacer @ ${commit:0:9} plus uncommitted edits"
     fi
   else
-    git archive "$BRANCH" | tar -x -C "$tmp"
-    origin="$BRANCH @ ${commit:0:9}"
+    git -C "$YACER_REPO" archive "$commit" | tar -x -C "$tmp"
+    origin="yacer @ ${commit:0:9}"
   fi
 
-  # The branch names the CoreELEC commit it is built and tested against, and CI
+  # This repository names the CoreELEC commit it is built and tested against, and CI
   # builds exactly that one. A local build of another commit is a different tree
   # from the one CI builds, so it is refused unless YACER_MIRROR says what this
   # clone is deliberately tracking instead.
   pin=$(tr -d '[:space:]' < "$tmp/coreelec.pin" 2>/dev/null || true)
-  [ -n "$pin" ] || die "$BRANCH has no coreelec.pin"
+  [ -n "$pin" ] || die "yacer has no coreelec.pin"
   if [ -n "${YACER_MIRROR:-}" ]; then
     mirror=$YACER_MIRROR
     git rev-parse --verify --quiet "$mirror^{commit}" >/dev/null \
@@ -104,7 +100,7 @@ apply)
      git fetch origin refs/tags/coreelec-pin/$pin   (or: git fetch origin coreelec-22)"
     fi
     if [ "$(git rev-parse HEAD)" != "$pin" ]; then
-      die "this checkout is at $(git rev-parse --short HEAD), and $BRANCH is pinned to ${pin:0:10}.
+      die "this checkout is at $(git rev-parse --short HEAD), and yacer is pinned to ${pin:0:10}.
      git checkout --detach $pin
      or set YACER_MIRROR to build against what this clone is at instead"
     fi
@@ -124,7 +120,7 @@ apply)
       if ! git diff --quiet "$mirror" -- "$f" 2>/dev/null; then
         die "$f differs from $mirror and $(basename "$p") edits it.
      This clone is not at the mirror state the patches were written against.
-     Check out the mirror to test the branch, or set YACER_MIRROR to whatever
+     Check out the mirror to test yacer, or set YACER_MIRROR to whatever
      this clone is actually tracking."
       fi
     done < <(sed -n 's|^--- a/||p' "$p")
@@ -183,7 +179,7 @@ apply)
 
   if ! grep -q '^file \|^patch ' "$STATE"; then
     rm -f "$STATE"; rm -rf "$SRCSAVE"
-    echo "yacer-local: $BRANCH carries no files to add and no tree-patches." >&2
+    echo "yacer-local: yacer carries no files to add and no tree-patches." >&2
     echo "  Building from this would produce stock CoreELEC." >&2
     exit 1
   fi
@@ -199,7 +195,7 @@ revert)
   if [ -d "$SRCSAVE/patches-yacer" ] || [ -d "$SRCSAVE/overlay" ]; then
     copy_src "$SRCSAVE" "$tmp"
   else
-    git archive "$commit" | tar -x -C "$tmp"
+    git -C "$YACER_REPO" archive "$commit" | tar -x -C "$tmp"
   fi
 
   # Check before touching anything. These files are untracked in a mirror

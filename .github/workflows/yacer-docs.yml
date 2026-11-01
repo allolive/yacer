@@ -9,7 +9,7 @@ name: YACER change list
 
 on:
   push:
-    branches: [ yacer ]
+    branches: [ main ]
     paths:
       - 'patches-yacer/**'
       - 'scripts/yacer-changes.py'

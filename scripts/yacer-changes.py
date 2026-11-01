@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "site")
 REPO = os.environ.get("GITHUB_REPOSITORY", "allolive/yacer")
+MIRROR = os.environ.get("MIRROR_REPO", "allolive/CoreELEC")
 COREELEC = "CoreELEC 22 nightly"
 
 # The page is the branch's own grouping - patches-yacer/<NN-name>/ - in that
@@ -169,7 +170,7 @@ def collect():
 
 def render(groups, blurbs):
     sha = os.environ.get("GITHUB_SHA") or git("rev-parse", "HEAD")
-    ref = sha or "yacer"
+    ref = sha or "main"
     # The CoreELEC commit the builds use, not the mirror branch that follows
     # upstream ahead of it.
     try:
@@ -238,8 +239,8 @@ footer {{ color:var(--muted); font-size:12px; margin-top:40px; }}
 <p class="lead">Unofficial {COREELEC} builds: everything is {COREELEC} as they ship it, plus the {total} patches below.
 Release notes list what changed from one build to the next; this page lists the patches as they stand now.</p>
 <section><h2>Repository</h2><ul class="links">
-<li><a class="title" href="https://github.com/{REPO}/tree/yacer">Yacer</a><div class="meta">our patches, overlay and build workflows</div></li>
-<li><a class="title" href="https://github.com/{REPO}/tree/{pin}">CoreELEC</a><div class="meta">the {COREELEC} tree the builds start from, at {e(pin[:10])}</div></li>
+<li><a class="title" href="https://github.com/{REPO}">Yacer</a><div class="meta">our patches, overlay and build workflows</div></li>
+<li><a class="title" href="https://github.com/{MIRROR}/tree/{pin}">CoreELEC</a><div class="meta">the {COREELEC} tree the builds start from, at {e(pin[:10])}</div></li>
 </ul></section>
 <section><h2>Releases</h2><ul class="links">
 <li><a class="title" href="https://github.com/{REPO}/releases">All builds</a><div class="meta">each release lists what changed since the build before it</div></li>
