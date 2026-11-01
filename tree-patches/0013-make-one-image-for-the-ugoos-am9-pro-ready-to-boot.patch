@@ -1,0 +1,61 @@
+From: allolive <160342668+allolive@users.noreply.github.com>
+Subject: [PATCH] Make one image, for the Ugoos AM9 Pro, ready to boot
+
+`make image` writes an .img.gz for every board CoreELEC knows, and the
+Generic one leaves the device tree and the remote to whoever flashes it.
+These builds are for one box, so the image is one: the Generic image with
+the AM9 Pro's device tree already copied in as dtb.img (CoreELEC's own
+DTBIMG, which only needed passing through to mkimage) and the UR-02
+remote's remote.conf next to it, from CoreELEC's remotes collection. The
+update tar is unchanged.
+
+diff --git a/projects/Amlogic-ce/devices/Amlogic-no/bootloader/mkimage b/projects/Amlogic-ce/devices/Amlogic-no/bootloader/mkimage
+--- a/projects/Amlogic-ce/devices/Amlogic-no/bootloader/mkimage
++++ b/projects/Amlogic-ce/devices/Amlogic-no/bootloader/mkimage
+@@ -66,3 +66,10 @@ if [ -n "${DTBIMG}" -a "${SUBDEVICE}" = "Generic" ]; then
+     echo "image: can't include \"${DTBIMG}\", file doesn't exist"
+   fi
+ fi
++
++# ours: the remote's configuration, for the box dtb.img is for
++if [ -n "${IMAGE_REMOTE_CONF}" -a "${SUBDEVICE}" = "Generic" ]; then
++  echo "image: include ${IMAGE_REMOTE_CONF} as remote.conf"
++  mcopy "${PROJECT_DIR}/${PROJECT}/devices/${DEVICE}/${IMAGE_REMOTE_CONF}" "::/remote.conf" \
++    || { echo "image: can't include \"${IMAGE_REMOTE_CONF}\""; exit 1; }
++fi
+diff --git a/projects/Amlogic-ce/devices/Amlogic-no/options b/projects/Amlogic-ce/devices/Amlogic-no/options
+--- a/projects/Amlogic-ce/devices/Amlogic-no/options
++++ b/projects/Amlogic-ce/devices/Amlogic-no/options
+@@ -150,5 +150,11 @@
+   # CoreELEC Subdevices
+     SUBDEVICES="Khadas_VIM4 Khadas_VIM1S Odroid_C4 Odroid_C5 Odroid_N2 Radxa_Zero Radxa_Zero2 Alta Solitude"
+ 
++  # ours: one image, for the Ugoos AM9 Pro - its device tree as dtb.img and
++  # the UR-02 remote's remote.conf already on it
++    IMAGE_SUBDEVICES="Generic"
++    DTBIMG="s6_s905x5_ugoos_am9_pro.dtb"
++    IMAGE_REMOTE_CONF="remotes/ugoos-ur02.conf"
++
+   # TEE supported SoC
+     TEE_SOC="S928X A311D2 S905W2 S905X4 S905Y4 S905X5M S905X5 S905X5L S905Y5 S905A"
+diff --git a/scripts/image b/scripts/image
+--- a/scripts/image
++++ b/scripts/image
+@@ -57,6 +57,8 @@ function do_mkimage() {
+     STORAGE_SIZE="${STORAGE_SIZE:-32}" \
+     OVA_SIZE="${OVA_SIZE}" \
+     SUBDEVICE="${SUBDEVICE}" \
++    DTBIMG="${DTBIMG}" \
++    IMAGE_REMOTE_CONF="${IMAGE_REMOTE_CONF}" \
+     ${SCRIPTS}/mkimage
+ }
+ 
+@@ -380,6 +382,8 @@ if [ "${1}" = "release" ] || [ "${1}" = "mkimage" ] || [ "${1}" = "noobs" ]; the
+       done
+     else
+       [ "${PROJECT}" = "Amlogic-ce" ] && SUBDEVICES+=" Generic"
++      # ours: only the images asked for, not one per board
++      [ -n "${IMAGE_SUBDEVICES}" ] && SUBDEVICES="${IMAGE_SUBDEVICES}"
+       for SUBDEVICE in ${SUBDEVICES}; do
+         do_mkimage "${IMAGE_NAME}"
+       done

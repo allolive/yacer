@@ -5,8 +5,9 @@
 # request with the `build` label gets a check build that publishes nothing. The
 # build cross-compiles to aarch64 on an x86_64 runner, so no ARM runner is
 # needed.
-# 'make release' produces the update tar without the per-device .img.gz files,
-# which keeps the runner disk and the job time down.
+# 'make image' produces the update tar and one fresh-flash .img.gz, for the
+# Ugoos AM9 Pro (tree-patches/0013 drops the other boards' images, which keeps
+# the runner disk and the job time down).
 name: YACER build
 
 on:
@@ -641,7 +642,7 @@ jobs:
             fi
             # capture the status directly: after `if cmd; then...fi` the value of
             # $? is the if-statement's own status, not the command's
-            timeout -k 300s "${remain}s" make release
+            timeout -k 300s "${remain}s" make image
             rc=$?
             [ $rc -eq 0 ] && exit 0
             # 124 is SIGTERM honoured; 137 is the -k SIGKILL, which is what a long
@@ -804,7 +805,15 @@ jobs:
           VER=${VER%.tar}
           SIZE=$(stat -c%s "$TAR")
           SHA=$(cut -d" " -f1 "$TAR.sha256" 2>/dev/null || sha256sum "$TAR" | cut -d" " -f1)
-          echo "publishing $BASE as release $VER ($SIZE bytes)"
+          # The one image tree-patch 0013 makes is the Generic one with the
+          # AM9 Pro's dtb.img and remote.conf on it: named for the box it is for.
+          GEN=target/${BASE%.tar}-Generic.img.gz
+          [ -f "$GEN" ] || { echo "::error::the build produced no $GEN"; exit 1; }
+          IMG=target/${BASE%.tar}-Ugoos_AM9_Pro.img.gz
+          mv "$GEN" "$IMG"
+          rm -f "$GEN.sha256"
+          (cd target && sha256sum "${IMG##*/}" > "${IMG##*/}.sha256")
+          echo "publishing $BASE and ${IMG##*/} as release $VER ($SIZE bytes)"
 
           # What landed since the previous build. The shas come from a marker this
           # workflow writes into every release; releases made before it existed
@@ -868,8 +877,10 @@ jobs:
 
           Tracks the CoreELEC 22.0 nightly tree and adds a few patches of our own.
 
-          Install it the way you would any CoreELEC update: copy the \`.tar\` below to
-          your box's \`.update\` share and reboot. This is not an official CoreELEC
+          New install: write the \`.img.gz\` below to an SD card or USB stick (see
+          the [README](https://github.com/${{ github.repository }}#installing)). Update:
+          copy the \`.tar\` to your box's \`.update\` share and reboot, or let the
+          \`YACER-22\` update channel install it. This is not an official CoreELEC
           release and carries no warranty - you install it at your own risk.
 
           $CHANGES
@@ -891,12 +902,12 @@ jobs:
           <!-- yacer-build ce=${CE_SHA} ya=${YA_SHA} -->
           NOTES
 
-          gh release create "$VER" "$TAR" "$TAR.sha256" \
+          gh release create "$VER" "$TAR" "$TAR.sha256" "$IMG" "$IMG.sha256" \
             --repo "${{ github.repository }}" \
             --title "$VER" \
             --prerelease \
             --notes-file notes.md \
-            || gh release upload "$VER" "$TAR" "$TAR.sha256" --repo "${{ github.repository }}" --clobber
+            || gh release upload "$VER" "$TAR" "$TAR.sha256" "$IMG" "$IMG.sha256" --repo "${{ github.repository }}" --clobber
 
           # Ask the feed workflow to rebuild. A release created with GITHUB_TOKEN
           # raises no release event - GitHub does not start runs from events its own
@@ -1039,7 +1050,7 @@ jobs:
 
       - name: Show artifacts
         if: always() && env.INCOMPLETE != '1'
-        run: ls -lh target/*.tar target/*.tar.sha256 2>/dev/null || echo "no tar (the build did not get that far)"
+        run: ls -lh target/*.tar target/*.tar.sha256 target/*.img.gz 2>/dev/null || echo "no tar (the build did not get that far)"
 
       - name: Continue in a follow-up run
         if: always() && !cancelled() && env.INCOMPLETE == '1' && env.PROGRESS == '1' && env.STATE_CACHED == '1'
