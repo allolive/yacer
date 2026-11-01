@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "site")
-REPO = os.environ.get("GITHUB_REPOSITORY", "allolive/CoreELEC")
+REPO = os.environ.get("GITHUB_REPOSITORY", "allolive/yacer")
 COREELEC = "CoreELEC 22 nightly"
 
 # The page is the branch's own grouping - patches-yacer/<NN-name>/ - in that

@@ -16,8 +16,8 @@ fetched under a timeout, and About says where to report what.
  msgctxt "#610"
 -msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/CoreELEC[CR][CR]"
 -msgstr "[B]Podpora[/B] je poskytována prostřednictvím našeho fóra:[CR]https://discourse.coreelec.org[CR][CR][B]Dokumentaci[/B] si můžete přečíst na našem webu:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] si můžete přečíst na našem webu:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] najdete na GitHubu:[CR]https://github.com/CoreELEC[CR][CR]"
-+msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/allolive/CoreELEC[CR][CR]"
-+msgstr "[B]Podpora[/B] je poskytována prostřednictvím našeho fóra:[CR]https://discourse.coreelec.org[CR][CR][B]Dokumentaci[/B] si můžete přečíst na našem webu:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] si můžete přečíst na našem webu:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] najdete na GitHubu:[CR]https://github.com/allolive/CoreELEC[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/CoreELEC/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
++msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/allolive/yacer[CR][CR]"
++msgstr "[B]Podpora[/B] je poskytována prostřednictvím našeho fóra:[CR]https://discourse.coreelec.org[CR][CR][B]Dokumentaci[/B] si můžete přečíst na našem webu:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] si můžete přečíst na našem webu:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] najdete na GitHubu:[CR]https://github.com/allolive/yacer[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/yacer/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
  
  msgctxt "#700"
  msgid ""
@@ -29,7 +29,7 @@ diff -ruN a/language/resource.language.en_gb/strings.po b/language/resource.lang
  
  msgctxt "#610"
 -msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/CoreELEC[CR][CR]"
-+msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/allolive/CoreELEC[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/CoreELEC/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
++msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/allolive/yacer[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/yacer/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
  msgstr ""
  
  msgctxt "#700"
@@ -42,8 +42,8 @@ diff -ruN a/language/resource.language.es_es/strings.po b/language/resource.lang
  msgctxt "#610"
 -msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/CoreELEC[CR][CR]"
 -msgstr "[B]Soporte[/B] se proporciona a través de nuestro foro:[CR]https://discourse.coreelec.org[CR][CR][B]Documentación[/B] se puede leer en nuestra página web:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] se puede leer en nuestra página web:[CR]https://wiki.coreelec.org[CR][CR][B]Código[/B] se puede encontrar en GitHub:[CR]https://github.com/CoreELEC[CR][CR]"
-+msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/allolive/CoreELEC[CR][CR]"
-+msgstr "[B]Soporte[/B] se proporciona a través de nuestro foro:[CR]https://discourse.coreelec.org[CR][CR][B]Documentación[/B] se puede leer en nuestra página web:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] se puede leer en nuestra página web:[CR]https://wiki.coreelec.org[CR][CR][B]Código[/B] se puede encontrar en GitHub:[CR]https://github.com/allolive/CoreELEC[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/CoreELEC/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
++msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/allolive/yacer[CR][CR]"
++msgstr "[B]Soporte[/B] se proporciona a través de nuestro foro:[CR]https://discourse.coreelec.org[CR][CR][B]Documentación[/B] se puede leer en nuestra página web:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] se puede leer en nuestra página web:[CR]https://wiki.coreelec.org[CR][CR][B]Código[/B] se puede encontrar en GitHub:[CR]https://github.com/allolive/yacer[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/yacer/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
  
  msgctxt "#700"
  msgid "Configure a hostname, keyboard type, perform a reset, update, or backups and restores"
@@ -55,7 +55,7 @@ diff -ruN a/language/resource.language.fr_ca/strings.po b/language/resource.lang
  "GitHub:[CR]https://github.com/LibreELEC[CR][CR][B]Donations[/B] towards "
  "project expenses are accepted via PayPal:[CR]donations@libreelec.tv"
 -msgstr "[B]Le support[/B] est fourni via notre forum :[CR]https://forum.libreelec.tv[CR][CR][B]La documentation[/B] est accessible sur notre wiki :[CR]https://libreelec.wiki[CR][CR][B]Le code source[/B] est disponible sur GitHub :[CR]https://github.com/LibreELEC[CR][CR][B]Les donations[/B] au projet par PayPal sont acceptées :[CR]donations@libreelec.tv"
-+msgstr "[B]Le support[/B] est fourni via notre forum :[CR]https://forum.libreelec.tv[CR][CR][B]La documentation[/B] est accessible sur notre wiki :[CR]https://libreelec.wiki[CR][CR][B]Le code source[/B] est disponible sur GitHub :[CR]https://github.com/LibreELEC[CR][CR][B]Les donations[/B] au projet par PayPal sont acceptées :[CR]donations@libreelec.tv[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/CoreELEC/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
++msgstr "[B]Le support[/B] est fourni via notre forum :[CR]https://forum.libreelec.tv[CR][CR][B]La documentation[/B] est accessible sur notre wiki :[CR]https://libreelec.wiki[CR][CR][B]Le code source[/B] est disponible sur GitHub :[CR]https://github.com/LibreELEC[CR][CR][B]Les donations[/B] au projet par PayPal sont acceptées :[CR]donations@libreelec.tv[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/yacer/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
  
  msgctxt "#700"
  msgid ""
@@ -67,7 +67,7 @@ diff -ruN a/language/resource.language.hu_hu/strings.po b/language/resource.lang
  msgctxt "#610"
  msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/@DISTRONAME@[CR][CR]"
 -msgstr "[B]A támogatást[/B] a fórumunkon keresztül biztosítjuk: [CR]https://discourse.coreelec.org[CR][CR][B]Dokumentáció[/B] a következő webhelyen olvasható:[CR] A https://coreelec.org[CR][CR][B]Wiki[/B] a weboldalunkon olvasható: [CR]https://wiki.coreelec.org[CR][CR][B]Kód [/B] megtalálható a GitHubon:[CR]https://github.com/@DISTRONAME@[CR][CR]"
-+msgstr "[B]A támogatást[/B] a fórumunkon keresztül biztosítjuk: [CR]https://discourse.coreelec.org[CR][CR][B]Dokumentáció[/B] a következő webhelyen olvasható:[CR] A https://coreelec.org[CR][CR][B]Wiki[/B] a weboldalunkon olvasható: [CR]https://wiki.coreelec.org[CR][CR][B]Kód [/B] megtalálható a GitHubon:[CR]https://github.com/@DISTRONAME@[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/CoreELEC/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
++msgstr "[B]A támogatást[/B] a fórumunkon keresztül biztosítjuk: [CR]https://discourse.coreelec.org[CR][CR][B]Dokumentáció[/B] a következő webhelyen olvasható:[CR] A https://coreelec.org[CR][CR][B]Wiki[/B] a weboldalunkon olvasható: [CR]https://wiki.coreelec.org[CR][CR][B]Kód [/B] megtalálható a GitHubon:[CR]https://github.com/@DISTRONAME@[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/yacer/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
  
  msgctxt "#700"
  msgid "Configure a hostname, keyboard type, perform a reset, update, or backups and restores"
@@ -79,14 +79,14 @@ diff -ruN a/language/resource.language.uk_ua/strings.po b/language/resource.lang
  "read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read "
  "at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found"
 -" on GitHub:[CR]https://github.com/CoreELEC[CR][CR]"
-+" on GitHub:[CR]https://github.com/allolive/CoreELEC[CR][CR]"
++" on GitHub:[CR]https://github.com/allolive/yacer[CR][CR]"
  msgstr ""
  "[B]Підтримка[/B] надається на нашому "
  "форумі:[CR]https://discourse.coreelec.org[CR][CR][B]Документацію[/B] можна "
  "прочитати на нашому сайті:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] можна "
  "прочитати на нашому сайті:[CR]https://wiki.coreelec.org[CR][CR][B]Код[/B] "
 -"можна знайти на GitHub:[CR]https://github.com/CoreELEC[CR][CR]"
-+"можна знайти на GitHub:[CR]https://github.com/allolive/CoreELEC[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/CoreELEC/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
++"можна знайти на GitHub:[CR]https://github.com/allolive/yacer[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/yacer/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
  
  msgctxt "#700"
  msgid ""
@@ -99,8 +99,8 @@ diff -ruN a/language/resource.language.zh_cn/strings.po b/language/resource.lang
  msgctxt "#610"
 -msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/CoreELEC[CR][CR]"
 -msgstr "[B]支持[/B]可通过我们的论坛获取：[CR]https://discourse.coreelec.org[CR][CR][B]文档[/B]可通过我们的网站查阅：[CR]https://coreelec.org[CR][CR][B]维基[/B]可通过我们的网站查阅：[CR]https://wiki.coreelec.org[CR][CR][B]代码[/B]可在 GitHub 获取：[CR]https://github.com/CoreELEC[CR][CR]"
-+msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/allolive/CoreELEC[CR][CR]"
-+msgstr "[B]支持[/B]可通过我们的论坛获取：[CR]https://discourse.coreelec.org[CR][CR][B]文档[/B]可通过我们的网站查阅：[CR]https://coreelec.org[CR][CR][B]维基[/B]可通过我们的网站查阅：[CR]https://wiki.coreelec.org[CR][CR][B]代码[/B]可在 GitHub 获取：[CR]https://github.com/allolive/CoreELEC[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/CoreELEC/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
++msgid "[B]Support[/B] is provided via our forum:[CR]https://discourse.coreelec.org[CR][CR][B]Documentation[/B] can be read at our website:[CR]https://coreelec.org[CR][CR][B]Wiki[/B] can be read at our website:[CR]https://wiki.coreelec.org[CR][CR][B]Code[/B] can be found on GitHub:[CR]https://github.com/allolive/yacer[CR][CR]"
++msgstr "[B]支持[/B]可通过我们的论坛获取：[CR]https://discourse.coreelec.org[CR][CR][B]文档[/B]可通过我们的网站查阅：[CR]https://coreelec.org[CR][CR][B]维基[/B]可通过我们的网站查阅：[CR]https://wiki.coreelec.org[CR][CR][B]代码[/B]可在 GitHub 获取：[CR]https://github.com/allolive/yacer[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/yacer/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
  
  msgctxt "#700"
  msgid "Configure a hostname, keyboard type, perform a reset, update, or backups and restores"
@@ -112,7 +112,7 @@ diff -ruN a/language/resource.language.zh_tw/strings.po b/language/resource.lang
  " in our wiki:[CR]https://libreelec.wiki[CR][CR][B]Code[/B] can be found on "
  "GitHub:[CR]https://github.com/LibreELEC[CR][CR][B]Donations[/B] towards "
 -"project expenses are accepted via PayPal:[CR]donations@libreelec.tv"
-+"project expenses are accepted via PayPal:[CR]donations@libreelec.tv[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/CoreELEC/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
++"project expenses are accepted via PayPal:[CR]donations@libreelec.tv[CR][CR][B]Reporting a problem[/B][CR]Anything specific to a yacer build - the build itself, or a setting only these builds have - belongs on our tracker:[CR]https://github.com/allolive/yacer/issues[CR]Anything you can reproduce on a stock CoreELEC build is CoreELEC's, and reaches the people who can fix it through the forum above. Please check there first.[CR][CR]"
  msgstr ""
  
  msgctxt "#700"
@@ -131,8 +131,8 @@ diff -ruN a/src/resources/lib/modules/updates.py b/src/resources/lib/modules/upd
      KERNEL_CMD = None
      UPDATE_REQUEST_URL = None
      UPDATE_DOWNLOAD_URL = None
-+    YACER_UPDATE_URL = 'https://github.com/allolive/CoreELEC/releases/download/yacer-feed/releases.json'
-+    YACER_AUTOUPDATE_URL = 'https://github.com/allolive/CoreELEC/releases/download/yacer-feed/update.json'
++    YACER_UPDATE_URL = 'https://github.com/allolive/yacer/releases/download/yacer-feed/releases.json'
++    YACER_AUTOUPDATE_URL = 'https://github.com/allolive/yacer/releases/download/yacer-feed/update.json'
      LOCAL_UPDATE_DIR = None
      menu = {'2': {
          'name': 32005,

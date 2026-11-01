@@ -17,13 +17,13 @@ index 5c03ce537e..eb91ef5759 100644
  
  # Distribution Home URL
 -  DISTRO_HOME_URL="https://coreelec.org"
-+  DISTRO_HOME_URL="https://github.com/allolive/CoreELEC"
++  DISTRO_HOME_URL="https://github.com/allolive/yacer"
  
  # Welcome Message for SSH Server (up to 5 Lines)
    GREETING0="##############################################"
    GREETING1="#                  CoreELEC                  #"
 -  GREETING2="#            https://coreelec.org            #"
-+  GREETING2="#  https://github.com/allolive/CoreELEC      #"
++  GREETING2="#     https://github.com/allolive/yacer      #"
    GREETING3="##############################################"
    GREETING4=""
  

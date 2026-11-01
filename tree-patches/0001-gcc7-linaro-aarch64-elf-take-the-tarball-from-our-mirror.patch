@@ -21,7 +21,7 @@ diff --git a/projects/Amlogic-ce/packages/lang/gcc7-linaro-aarch64-elf/package.m
 +# Upstream releases.linaro.org is offline (host decommissioned). Self-hosted mirror of the
 +# byte-identical tarball; sha256 still verified against PKG_SHA256 above.
 +# Original: https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/aarch64-elf/gcc-linaro-${PKG_VERSION}-x86_64_aarch64-elf.tar.xz
-+PKG_URL="https://github.com/allolive/CoreELEC/releases/download/packages-mirror/${PKG_NAME}__${PKG_NAME}-${PKG_VERSION}.tar.xz"
++PKG_URL="https://github.com/allolive/yacer/releases/download/packages-mirror/${PKG_NAME}__${PKG_NAME}-${PKG_VERSION}.tar.xz"
 +# The mirror names its assets <package>__<filename>; the build still wants the
 +# plain filename, so do not let it be derived from the URL.
 +PKG_SOURCE_NAME="${PKG_NAME}-${PKG_VERSION}.tar.xz"
