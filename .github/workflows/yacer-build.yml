@@ -263,6 +263,82 @@ jobs:
           echo "YA_SHA=$YA_SHA" >> "$GITHUB_ENV"
           echo "coreelec $CE + yacer $YA -> $V"
 
+      # What landed since the previous build, worked out before the build so the
+      # image carries it: scripts/image copies RELEASE_NOTES to /etc/release-notes,
+      # and CoreELEC's settings add-on shows that file the first time the box starts
+      # after an update. The release notes get the same list, with links.
+      - name: List the changes since the previous build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The shas come from a marker this
+          # workflow writes into every release; releases made before it existed
+          # only have the commit links, so fall back to those. Either can be a
+          # commit an upstream force-push has since orphaned, in which case the
+          # compare 404s and the build simply ships without a changelog.
+          prev_tag=$(gh release list --repo "${{ github.repository }}" --limit 200 \
+                       --json tagName,isDraft --jq '.[] | select(.isDraft|not) | .tagName' \
+                     | awk 'match($0,/_[0-9]{14}$/){print substr($0,RSTART+1)"\t"$0}' \
+                     | sort -r | cut -f2 | head -1 || true)
+          prev_ce=""; prev_ya=""
+          if [ -n "$prev_tag" ]; then
+            pb=$(gh release view "$prev_tag" --repo "${{ github.repository }}" --json body --jq .body 2>/dev/null || true)
+            prev_ce=$(printf '%s' "$pb" | sed -n 's/.*yacer-build ce=\([0-9a-f]\{40\}\).*/\1/p' | head -1)
+            prev_ya=$(printf '%s' "$pb" | sed -n 's/.*yacer-build ce=[0-9a-f]\{40\} ya=\([0-9a-f]\{40\}\).*/\1/p' | head -1)
+            [ -n "$prev_ce" ] || prev_ce=$(printf '%s' "$pb" | grep -oE 'CoreELEC/CoreELEC/commit/[0-9a-f]{40}' | grep -oE '[0-9a-f]{40}' | head -1 || true)
+            [ -n "$prev_ya" ] || prev_ya=$(printf '%s' "$pb" | grep -oE '${{ github.repository }}/commit/[0-9a-f]{40}' | grep -oE '[0-9a-f]{40}' | head -1 || true)
+          fi
+
+          MD="$RUNNER_TEMP/changes.md"
+          TXT="$RUNNER_TEMP/release-notes.txt"
+
+          # Each tree gets a section whatever happens: "no change", "could not
+          # compare" and "never recorded" are three different things and a reader
+          # deserves to know which one they are looking at. A compare is capped at
+          # 250 commits, so say when the list is short of the truth. Markdown goes
+          # to stdout; the same list as Kodi text goes to $TXT.
+          render() {   # repo base head heading
+            local out n
+            printf '\n**%s**\n\n' "$4"
+            printf '\n[B]%s[/B]\n' "$4" >> "$TXT"
+            if [ -z "$2" ]; then
+              printf -- '- the previous build did not record its commit\n' | tee -a "$TXT"; return 0
+            fi
+            if ! out=$(gh api "repos/$1/compare/$2...$3" --jq \
+                         '.commits[] | [.sha, .html_url, (.commit.message | split("\n")[0])] | @tsv' \
+                         2>/dev/null); then
+              printf -- '- could not compare `%s...%s` - a force-push may have orphaned it\n' "${2:0:7}" "${3:0:7}"
+              printf -- '- could not compare with the previous build\n' >> "$TXT"
+              return 0
+            fi
+            if [ -z "$out" ]; then
+              printf -- '- no change\n' | tee -a "$TXT"; return 0
+            fi
+            # compare returns oldest first; show the newest 50, newest at the top
+            n=$(printf '%s\n' "$out" | wc -l)
+            out=$(printf '%s\n' "$out" | tail -50 | tac)
+            printf '%s\n' "$out" | awk -F'\t' '{ printf "- [`%s`](%s) %s\n", substr($1, 1, 7), $2, $3 }'
+            printf '%s\n' "$out" | cut -f3 | sed 's/^/- /' >> "$TXT"
+            [ "$n" -gt 50 ] && printf -- '- ...and %d older commit(s) not listed\n' "$((n - 50))" | tee -a "$TXT"
+            return 0
+          }
+
+          # A first build has nothing to compare with: the box then gets an empty
+          # file, which the add-on takes as no notes.
+          if [ -n "$prev_tag" ]; then
+            printf '[B]Changes since %s[/B]\n' "$prev_tag" > "$TXT"
+            {
+              printf '## Changes since %s\n' "$prev_tag"
+              render CoreELEC/CoreELEC "$prev_ce" "$CE_SHA" "CoreELEC"
+              render "${{ github.repository }}" "$prev_ya" "$YA_SHA" "yacer"
+            } > "$MD"
+          else
+            printf '## Changes\n\nFirst build.\n' > "$MD"
+            : > "$TXT"
+          fi
+          echo "RELEASE_NOTES=$TXT" >> "$GITHUB_ENV"
+          cat "$TXT"
+
       # Pinned once and reused, so the save key cannot hash a tree the build has
       # since modified and become unrestorable. 'distributions', not 'distro':
       # the latter matches nothing, and hashFiles only warns when every pattern
@@ -815,60 +891,7 @@ jobs:
           (cd target && sha256sum "${IMG##*/}" > "${IMG##*/}.sha256")
           echo "publishing $BASE and ${IMG##*/} as release $VER ($SIZE bytes)"
 
-          # What landed since the previous build. The shas come from a marker this
-          # workflow writes into every release; releases made before it existed
-          # only have the commit links, so fall back to those. Either can be a
-          # commit an upstream force-push has since orphaned, in which case the
-          # compare 404s and the build simply ships without a changelog.
-          prev_tag=$(gh release list --repo "${{ github.repository }}" --limit 200 \
-                       --json tagName,isDraft --jq '.[] | select(.isDraft|not) | .tagName' \
-                     | awk 'match($0,/_[0-9]{14}$/){print substr($0,RSTART+1)"\t"$0}' \
-                     | sort -r | cut -f2 | head -1 || true)
-          prev_ce=""; prev_ya=""
-          if [ -n "$prev_tag" ]; then
-            pb=$(gh release view "$prev_tag" --repo "${{ github.repository }}" --json body --jq .body 2>/dev/null || true)
-            prev_ce=$(printf '%s' "$pb" | sed -n 's/.*yacer-build ce=\([0-9a-f]\{40\}\).*/\1/p' | head -1)
-            prev_ya=$(printf '%s' "$pb" | sed -n 's/.*yacer-build ce=[0-9a-f]\{40\} ya=\([0-9a-f]\{40\}\).*/\1/p' | head -1)
-            [ -n "$prev_ce" ] || prev_ce=$(printf '%s' "$pb" | grep -oE 'CoreELEC/CoreELEC/commit/[0-9a-f]{40}' | grep -oE '[0-9a-f]{40}' | head -1 || true)
-            [ -n "$prev_ya" ] || prev_ya=$(printf '%s' "$pb" | grep -oE '${{ github.repository }}/commit/[0-9a-f]{40}' | grep -oE '[0-9a-f]{40}' | head -1 || true)
-          fi
-
-          # Each tree gets a section whatever happens: "no change", "could not
-          # compare" and "never recorded" are three different things and a reader
-          # deserves to know which one they are looking at. A compare is capped at
-          # 250 commits, so say when the list is short of the truth.
-          render() {   # repo base head heading
-            local out n
-            printf '\n**%s**\n\n' "$4"
-            if [ -z "$2" ]; then
-              printf -- '- the previous build did not record its commit\n'; return 0
-            fi
-            if ! out=$(gh api "repos/$1/compare/$2...$3" --jq \
-                         '.commits[] | "- [`\(.sha[0:7])`](\(.html_url)) \(.commit.message | split("\n")[0])"' \
-                         2>/dev/null); then
-              printf -- '- could not compare `%s...%s` - a force-push may have orphaned it\n' "${2:0:7}" "${3:0:7}"
-              return 0
-            fi
-            if [ -z "$out" ]; then
-              printf -- '- no change\n'; return 0
-            fi
-            # compare returns oldest first; show the newest 50, newest at the top
-            n=$(printf '%s\n' "$out" | wc -l)
-            printf '%s\n' "$out" | tail -50 | tac
-            [ "$n" -gt 50 ] && printf -- '- ...and %d older commit(s) not listed\n' "$((n - 50))"
-            return 0
-          }
-
-          if [ -n "$prev_tag" ]; then
-            : > changes.md
-            {
-              render CoreELEC/CoreELEC "$prev_ce" "$CE_SHA" "CoreELEC"
-              render "${{ github.repository }}" "$prev_ya" "$YA_SHA" "yacer"
-            } >> changes.md
-            CHANGES="## Changes since $prev_tag"$'\n'"$(cat changes.md)"
-          else
-            CHANGES="## Changes"$'\n\n'"First build."
-          fi
+          CHANGES=$(cat "$RUNNER_TEMP/changes.md")
 
           # One release per build, so each keeps its own notes, its own changelog
           # and its own pair of commit links.
