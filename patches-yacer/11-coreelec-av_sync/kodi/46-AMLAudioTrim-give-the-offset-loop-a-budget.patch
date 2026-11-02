@@ -45,7 +45,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  
  void CAMLAudioTrim::Forget()
 @@ -344,7 +354,7 @@ double CAMLAudioTrim::Aim() const
-   return std::clamp(-m_lead / OFFSET_TAU, -m_slew, m_slew);
+   return std::clamp(-m_lead / OFFSET_TAU, -SLEW, SLEW);
  }
  
 -double CAMLAudioTrim::Feedforward() const
@@ -61,7 +61,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 +  return aim / STEP_RATE;
  }
  
- //! The cap, or nullopt while the setting is off.
+ bool CAMLAudioTrim::Enabled() const
 @@ -400,7 +410,9 @@ void CAMLAudioTrim::Settle(double reading)
    // audio running fast, which wants a lower level. The sign is the measured one:
    // raising the level was seen to raise the rate on this hardware, whatever the
@@ -105,7 +105,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 -  double Feedforward() const;
 +  double Feedforward(double aim) const;
  
-   std::optional<double> ReadSlew() const;
+   bool Enabled() const;
    void ForgetLocked();
 @@ -136,6 +136,9 @@ private:
  
@@ -115,5 +115,5 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 +  bool m_budgetSpent{false};  //!< OFFSET_BUDGET reached, said once
 +  double m_aimApplied{0.0};   //!< the offset rate last put out, after the budget
  
-   double m_slew{0.0};         //!< the largest rate error the offset may ask for
-   bool m_haveSlew{false};     //!< whether the offset loop is switched on at all
+   bool m_enabled{false};      //!< the setting, re-read every dither tick
+   double m_levelMax{0.0};     //!< MAX_LEVEL, or zero while the setting is off

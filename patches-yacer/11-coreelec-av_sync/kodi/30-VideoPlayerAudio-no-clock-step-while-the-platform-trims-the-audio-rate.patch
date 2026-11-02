@@ -32,7 +32,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 +bool CAMLAudioTrim::Holding()
 +{
 +  std::lock_guard<std::mutex> lock(m_mutex);
-+  return m_checked && m_present && m_haveSlew && m_haveLead && !m_stopped;
++  return m_checked && m_present && m_enabled && m_haveLead && !m_stopped;
 +}
 +
  std::optional<int> CAMLAudioTrim::ReadLevel() const

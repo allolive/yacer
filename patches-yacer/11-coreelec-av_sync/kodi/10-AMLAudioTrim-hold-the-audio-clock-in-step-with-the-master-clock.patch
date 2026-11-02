@@ -70,10 +70,10 @@ index 9880f0d5cf..c1ddb7e980 100755
        <visible>false</visible>
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
 new file mode 100644
-index 0000000000..81422e585e
+index 0000000000..51ad9b7bff
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.cpp
-@@ -0,0 +1,663 @@
+@@ -0,0 +1,655 @@
 +/*
 + *  Copyright (C) 2026 Team CoreELEC
 + *
@@ -171,6 +171,14 @@ index 0000000000..81422e585e
 +//! integrator, so being wrong by a factor slows convergence rather than moving
 +//! where it converges to.
 +constexpr double STEP_RATE = 30e-6;
++
++//! The ceiling on the level: the drift's own range plus the offset's slew.
++//! Floored to a whole level. The clamp in Update() rounds to an integer before
++//! applying it, so a fractional ceiling clamps a rounded level back to a
++//! fraction, the cast to int then truncates it, and the sigma-delta carry it did
++//! not pay off latches and is never paid off again.
++constexpr double MAX_LEVEL =
++    static_cast<int>(std::min(MAX_LEVEL_HW, MAX_LEVEL_RATE + SLEW / STEP_RATE));
 +
 +//! Fraction of the error taken out per decision.
 +//!
@@ -381,10 +389,10 @@ index 0000000000..81422e585e
 +
 +double CAMLAudioTrim::Aim() const
 +{
-+  if (!m_haveSlew || !m_haveLead || std::abs(m_lead) < OFFSET_DEADBAND)
++  if (!m_enabled || !m_haveLead || std::abs(m_lead) < OFFSET_DEADBAND)
 +    return 0.0;
 +
-+  return std::clamp(-m_lead / OFFSET_TAU, -m_slew, m_slew);
++  return std::clamp(-m_lead / OFFSET_TAU, -SLEW, SLEW);
 +}
 +
 +double CAMLAudioTrim::Feedforward() const
@@ -405,18 +413,11 @@ index 0000000000..81422e585e
 +  return Aim() / STEP_RATE;
 +}
 +
-+//! The cap, or nullopt while the setting is off.
-+std::optional<double> CAMLAudioTrim::ReadSlew() const
++bool CAMLAudioTrim::Enabled() const
 +{
 +  const auto component = CServiceBroker::GetSettingsComponent();
-+  if (!component)
-+    return std::nullopt;
-+
-+  const auto settings = component->GetSettings();
-+  if (!settings || !settings->GetBool(CSettings::SETTING_COREELEC_AMLOGIC_AUDIOPLL))
-+    return std::nullopt;
-+
-+  return SLEW;
++  const auto settings = component ? component->GetSettings() : nullptr;
++  return settings && settings->GetBool(CSettings::SETTING_COREELEC_AMLOGIC_AUDIOPLL);
 +}
 +
 +void CAMLAudioTrim::Settle(double reading)
@@ -474,7 +475,7 @@ index 0000000000..81422e585e
 +  // it would simply be integrated back out again.
 +  const double err = drift - aim;
 +
-+  // Off (the setting off: no slew, so Update() leaves the ceiling at zero). Nothing
++  // Off (the setting is off, so Update() set the ceiling to zero). Nothing
 +  // is written, so there is no level to integrate and no answer to judge.
 +  if (m_levelMax <= 0.0)
 +  {
@@ -603,21 +604,13 @@ index 0000000000..81422e585e
 +  // playback.
 +  if (now - m_lastDither >= DITHER)
 +  {
-+    const std::optional<double> slew = ReadSlew();
-+    const bool had = m_haveSlew;
-+    m_haveSlew = slew.has_value();
-+    m_slew = slew.value_or(0.0);
++    const bool had = m_enabled;
++    m_enabled = Enabled();
 +
-+    // Floored to a whole level. The clamp below rounds to an integer before
-+    // applying it, so a fractional ceiling clamps a rounded level back to a
-+    // fraction, the cast to int then truncates it, and the sigma-delta carry
-+    // it did not pay off latches and is never paid off again.
 +    // Off means the clock is not touched at all, not merely that the offset is
 +    // left alone: with no ceiling the level is always zero, the write is skipped,
 +    // and what remains is measurement.
-+    m_levelMax = m_haveSlew
-+                     ? std::floor(std::min(MAX_LEVEL_HW, MAX_LEVEL_RATE + m_slew / STEP_RATE))
-+                     : 0.0;
++    m_levelMax = m_enabled ? MAX_LEVEL : 0.0;
 +
 +    // Deliberately not clamping m_want here. Dropping the ceiling under a
 +    // wound-up level would step the rate by the whole difference at once, and
@@ -625,9 +618,8 @@ index 0000000000..81422e585e
 +    // loop ever does. With the aim gone the integrator walks it back down within
 +    // a few decisions, and the per-tick limit in WriteLevel bounds how fast that
 +    // reaches the clock.
-+    if (m_haveSlew != had)
-+      CLog::Log(LOGINFO, "CAMLAudioTrim: offset loop {}",
-+                m_haveSlew ? fmt::format("on, up to {:+.0f}ppm", m_slew * 1e6) : "off");
++    if (m_enabled != had)
++      CLog::Log(LOGINFO, "CAMLAudioTrim: offset loop {}", m_enabled ? "on" : "off");
 +  }
 +
 +  if (error)
@@ -739,10 +731,10 @@ index 0000000000..81422e585e
 +}
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.h
 new file mode 100644
-index 0000000000..50f71e7e79
+index 0000000000..c966a8f82c
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLAudioTrim.h
-@@ -0,0 +1,132 @@
+@@ -0,0 +1,131 @@
 +/*
 + *  Copyright (C) 2026 Team CoreELEC
 + *
@@ -821,7 +813,7 @@ index 0000000000..50f71e7e79
 +  CAMLAudioTrim& operator=(const CAMLAudioTrim&) = delete;
 +
 +  //! \brief The rate error the loop should hold to walk the offset out. Zero
-+  //! when there is no offset to walk out, or nothing said how fast it may be.
++  //! when there is no offset to walk out, or the setting is off.
 +  double Aim() const;
 +
 +  //! \brief The aim expressed as levels, applied without being integrated
@@ -829,7 +821,7 @@ index 0000000000..50f71e7e79
 +  //! rate needs is arithmetic, not something to be discovered.
 +  double Feedforward() const;
 +
-+  std::optional<double> ReadSlew() const;
++  bool Enabled() const;
 +  void ForgetLocked();
 +  std::optional<int> ReadLevel() const;
 +  bool WriteLevel(int level);
@@ -871,9 +863,8 @@ index 0000000000..50f71e7e79
 +  double m_lead{0.0};         //!< audio ahead of picture at the output
 +  bool m_haveLead{false};
 +
-+  double m_slew{0.0};         //!< the largest rate error the offset may ask for
-+  bool m_haveSlew{false};     //!< whether the offset loop is switched on at all
-+  double m_levelMax{2.0};     //!< MAX_LEVEL_RATE, or more once it is
++  bool m_enabled{false};      //!< the setting, re-read every dither tick
++  double m_levelMax{0.0};     //!< MAX_LEVEL, or zero while the setting is off
 +};
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 index 6db929f6fe..f7cd8469cd 100644
