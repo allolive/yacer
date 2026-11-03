@@ -1,0 +1,170 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: allolive <160342668+allolive@users.noreply.github.com>
+Date: Mon, 2 Nov 2026 23:55:00 -0500
+Subject: [PATCH] hdmitx21: s6: set the HDMI PLL to the mode's exact rate
+
+The S6 HDMI PLL was programmed from a pixel clock rounded to whole kHz
+twice over: the 1000/1001 rate is applied to the table clock in kHz,
+and the colour depth's 5/4 or 3/2 truncates before the x10. The PLL
+fraction is then truncated as well. Measured against the 24MHz crystal
+the output ran off its nominal rate by a fixed amount per mode:
++2.4ppm at 1080p23.976, -3.0ppm at 2160p23.976 10-bit, -5.4ppm at
+1080p24 10-bit. A player that times frames on the crystal drops or
+repeats one every one to three hours at those rates.
+
+Compute the VCO in Hz from the mode table's whole-rate clock, apply
+the depth, the 4:2:0 halving, the output divider and then 1000/1001,
+and round the fraction to the nearest step. Integer rates come out
+exact; 1000/1001 rates within 0.003ppm, which a 17-bit fraction of
+12MHz cannot better. Where the table holds no matching timing the
+pixel clock is used as before.
+
+The s5, s7 and s7d paths carry the same rounding and are left alone
+here: only S6 has been measured.
+
+Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
+---
+ drivers/media/vout/hdmitx21/hw/common.h |  2 +-
+ drivers/media/vout/hdmitx21/hw/hw_clk.c | 45 ++++++++++++++++++++++++-
+ drivers/media/vout/hdmitx21/hw/hw_s6.c  | 22 +++++++-----
+ 3 files changed, 58 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/media/vout/hdmitx21/hw/common.h b/drivers/media/vout/hdmitx21/hw/common.h
+index 6432bbc99..bbf29afe0 100644
+--- a/drivers/media/vout/hdmitx21/hw/common.h
++++ b/drivers/media/vout/hdmitx21/hw/common.h
+@@ -173,7 +173,7 @@ void set21_s7d_htxpll_clk_out(u32 clk, u32 div);
+ void set_hdmitx_s7d_htx_pll(struct hdmitx_dev *hdev);
+ void set21_s1a_hpll_clk_out(u32 frac_rate, u32 clk);
+ void hdmitx_s1a_clock_gate_ctrl(bool en);
+-void set21_s6_htxpll_clk_out(u32 clk, u32 div);
++void set21_s6_htxpll_clk_out(u64 vco_hz, u32 div);
+ void set21_s1a_hpll_clk_out(u32 frac_rate, u32 clk);
+ void set_hdmitx_s6_htx_pll(struct hdmitx_dev *hdev);
+ void s1a_reset_div_clk(struct hdmitx_dev *hdev);
+diff --git a/drivers/media/vout/hdmitx21/hw/hw_clk.c b/drivers/media/vout/hdmitx21/hw/hw_clk.c
+index 4b91b09b9..c1973c2e3 100644
+--- a/drivers/media/vout/hdmitx21/hw/hw_clk.c
++++ b/drivers/media/vout/hdmitx21/hw/hw_clk.c
+@@ -1057,6 +1057,49 @@ void set_hdmitx_s7d_htx_pll(struct hdmitx_dev *hdev)
+ }
+ #endif
+ 
++/* The VCO in Hz. The 1000/1001 rate and the colour depth are applied to the
++ * mode table's clock rather than to one already rounded to whole kHz: each of
++ * those roundings moved the refresh rate by up to 5ppm.
++ */
++static u64 s6_htx_vco_hz(const struct hdmi_format_para *para, u32 div)
++{
++	const struct hdmi_timing *t = hdmitx_mode_vic_to_hdmi_timing(para->timing.vic);
++	bool frac = para->timing.v_freq % 1000 != 0;
++	u64 hz;
++
++	if (t && t->h_total == para->timing.h_total &&
++	    t->v_total == para->timing.v_total && t->v_freq % 1000 == 0) {
++		hz = (u64)t->pixel_freq * 1000;
++	} else {
++		hz = (u64)para->timing.pixel_freq * 1000;
++		frac = false;
++	}
++
++	if (para->cs != HDMI_COLORSPACE_YUV422) {
++		switch (para->cd) {
++		case COLORDEPTH_48B:
++			hz *= 2;
++			break;
++		case COLORDEPTH_36B:
++			hz = hz * 3 / 2;
++			break;
++		case COLORDEPTH_30B:
++			hz = hz * 5 / 4;
++			break;
++		case COLORDEPTH_24B:
++		default:
++			break;
++		}
++	}
++	hz *= 10;
++	if (para->cs == HDMI_COLORSPACE_YUV420)
++		hz /= 2;
++	hz *= div;
++	if (frac)
++		hz = DIV_ROUND_CLOSEST_ULL(hz * 1000, 1001);
++	return hz;
++}
++
+ void set_hdmitx_s6_htx_pll(struct hdmitx_dev *hdev)
+ {
+ 	enum hdmi_vic vic = HDMI_0_UNKNOWN;
+@@ -1123,7 +1166,7 @@ void set_hdmitx_s6_htx_pll(struct hdmitx_dev *hdev)
+ 		htx_vco *= 2;
+ 	} while (div <= 32);
+ 
+-	set21_s6_htxpll_clk_out(htx_vco, div);
++	set21_s6_htxpll_clk_out(s6_htx_vco_hz(para, div), div);
+ }
+ 
+ static void set_hdmitx_htx_pll(struct hdmitx_dev *hdev,
+diff --git a/drivers/media/vout/hdmitx21/hw/hw_s6.c b/drivers/media/vout/hdmitx21/hw/hw_s6.c
+index bb63da217..2f7115ce2 100644
+--- a/drivers/media/vout/hdmitx21/hw/hw_s6.c
++++ b/drivers/media/vout/hdmitx21/hw/hw_s6.c
+@@ -5,6 +5,7 @@
+ 
+ #include <linux/printk.h>
+ #include <linux/delay.h>
++#include <linux/math64.h>
+ #include <linux/arm-smccc.h>
+ #include "common.h"
+ 
+@@ -42,21 +43,23 @@ void disable_hdmitx_s6_plls(struct hdmitx_dev *hdev)
+ }
+ 
+ /* htx pll VCO output: (3G, 6G), for tmds */
+-static void set_s6_htxpll_clk_other(const u32 clk, const bool frl_en)
++static void set_s6_htxpll_clk_other(const u64 vco_hz, const bool frl_en)
+ {
+ 	u32 quotient;
+ 	u32 remainder;
+ 
+-	if (clk < 3000000 || clk >= 6000000) {
++	if (vco_hz < 3000000000ULL || vco_hz >= 6000000000ULL) {
+ 		pr_err("%s[%d] clock should be 4~6G\n", __func__, __LINE__);
+ 		return;
+ 	}
+ 
+-	quotient = clk / 12000;
+-	remainder = clk - quotient * 12000;
+-	/* remainder range: 0 ~ 23999, 0x5dbf, 15bits */
+-	remainder *= 1 << 17;
+-	remainder /= 12000;
++	/* 12MHz steps and a 17-bit fraction of one, rounded to the nearest */
++	quotient = div_u64(vco_hz, 12000000);
++	remainder = DIV_ROUND_CLOSEST_ULL((vco_hz - (u64)quotient * 12000000) << 17, 12000000);
++	if (remainder == 1 << 17) {
++		quotient++;
++		remainder = 0;
++	}
+ 	hd21_write_reg(ANACTRL_HDMIPLL_CTRL0, 0x00017000 | (quotient << 0));
+ 	hd21_write_reg(ANACTRL_HDMIPLL_CTRL1, 0x9040137d);
+ 	hd21_write_reg(ANACTRL_HDMIPLL_CTRL2, 0x04000000);
+@@ -73,8 +76,9 @@ static void set_s6_htxpll_clk_other(const u32 clk, const bool frl_en)
+ 	WAIT_FOR_PLL_LOCKED(ANACTRL_HDMIPLL_CTRL0);
+ }
+ 
+-void set21_s6_htxpll_clk_out(const u32 clk, u32 div)
++void set21_s6_htxpll_clk_out(const u64 vco_hz, u32 div)
+ {
++	const u32 clk = div_u64(vco_hz, 1000);
+ 	u32 pll_od0 = 0;
+ 	u32 pll_od00 = 0;
+ 	u32 pll_od01 = 0;
+@@ -100,7 +104,7 @@ void set21_s6_htxpll_clk_out(const u32 clk, u32 div)
+ 		return;
+ 	}
+ 
+-	set_s6_htxpll_clk_other(clk, hdev->frl_rate ? 1 : 0);
++	set_s6_htxpll_clk_other(vco_hz, hdev->frl_rate ? 1 : 0);
+ 
+ 	//pll_od00
+ 	if ((div % 8) == 0) {
