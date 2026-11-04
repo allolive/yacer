@@ -1,0 +1,60 @@
+From: allolive <160342668+allolive@users.noreply.github.com>
+Subject: [PATCH] GUIInfo: the display mode read whatever digits its rate has
+
+Player.Process(amlogic.displaymode) cut the VIC's mode at a fixed four
+characters from its end ("60hz"), so a three-digit rate or a suffix after
+"hz" broke it: "1920x1080p165hzV" showed as "1920x1080p16 4.995Hz", and
+"3840x2160p120hz" as "3840x2160p1 20Hz". The rate is now the digits before
+the last "hz", whatever follows; a mode without one is shown as it came.
+The fractional-rate rule (the GUI's fps not whole: rate / 1.001) is kept.
+
+Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
+---
+--- a/xbmc/guilib/guiinfo/CEGUIInfoProviders.h
++++ b/xbmc/guilib/guiinfo/CEGUIInfoProviders.h
+@@ -19,6 +19,7 @@
+ #include "windowing/GraphicContext.h"
+ #include "windowing/WinSystem.h"
+ 
++#include <cctype>
+ #include <cmath>
+ #include <fmt/format.h>
+ #include <mutex>
+@@ -109,17 +110,28 @@
+ 
+             if (sub_items.size() > 1)
+             {
+-              double fps = CServiceBroker::GetWinSystem()->GetGfxContext().GetFPS();
+-              item_value = StringUtils::Left(sub_items.at(1), sub_items.at(1).length() - 4) + " ";
+-
+-              if (fps != floor(fps))
++              const std::string& mode = sub_items.at(1);
++              const size_t hz = StringUtils::ToLower(std::string(mode)).rfind("hz");
++              size_t from = hz;
++              while (from != std::string::npos && from > 0 && isdigit(static_cast<unsigned char>(mode[from - 1])))
++                from--;
++              if (hz == std::string::npos || from == hz)
++                item_value = mode;
++              else
+               {
+-                float refreshrate = static_cast<float>(atof(StringUtils::Mid(sub_items.at(1), sub_items.at(1).length() - 4, 2).c_str())) / 1.001f;
+-                float refreshrate_rounded = std::round(refreshrate * 1000.0f) / 1000.0f;
+-                item_value += fmt::format("{:.6g}Hz", refreshrate_rounded);
++                double fps = CServiceBroker::GetWinSystem()->GetGfxContext().GetFPS();
++                const int rate = atoi(mode.substr(from, hz - from).c_str());
++                item_value = mode.substr(0, from) + " ";
++
++                if (fps != floor(fps))
++                {
++                  float refreshrate = static_cast<float>(rate) / 1.001f;
++                  float refreshrate_rounded = std::round(refreshrate * 1000.0f) / 1000.0f;
++                  item_value += fmt::format("{:.6g}Hz", refreshrate_rounded);
++                }
++                else
++                  item_value += std::to_string(rate) + "Hz";
+               }
+-              else
+-                item_value += StringUtils::Mid(sub_items.at(1), sub_items.at(1).length() - 4, 2) + "Hz";
+             }
+           }
+           else
