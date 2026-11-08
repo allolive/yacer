@@ -39,10 +39,10 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  2 files changed, 58 insertions(+), 8 deletions(-)
 
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index 1cc3cacb99..f6e96a373c 100644
+index e99752d5..34e6488f 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -985,6 +985,56 @@ void CDVDInputStreamBluray::RunProgram()
+@@ -1019,6 +1019,56 @@ void CDVDInputStreamBluray::RunProgram()
    }
  }
  
@@ -99,7 +99,7 @@ index 1cc3cacb99..f6e96a373c 100644
  bool CDVDInputStreamBluray::NextEvent()
  {
    if (m_pending.empty())
-@@ -1604,14 +1654,7 @@ void CDVDInputStreamBluray::UserInput(bd_vk_key_e vk)
+@@ -1646,14 +1696,7 @@ void CDVDInputStreamBluray::UserInput(bd_vk_key_e vk)
      CLog::Log(LOGDEBUG, "CDVDInputStreamBluray::UserInput - user input failed");
    }
    else
@@ -115,7 +115,7 @@ index 1cc3cacb99..f6e96a373c 100644
  }
  
  bool CDVDInputStreamBluray::MouseMove(const CPoint &point)
-@@ -1648,7 +1691,10 @@ bool CDVDInputStreamBluray::MouseClick(const CPoint &point)
+@@ -1690,7 +1733,10 @@ bool CDVDInputStreamBluray::MouseClick(const CPoint &point)
    }
  
    if (bd_user_input(m_bd, -1, BD_VK_MOUSE_ACTIVATE) >= 0)
@@ -126,7 +126,7 @@ index 1cc3cacb99..f6e96a373c 100644
  
    CLog::Log(LOGDEBUG, "CDVDInputStreamBluray::MouseClick - mouse click (user input) failed");
    return false;
-@@ -1667,6 +1713,7 @@ bool CDVDInputStreamBluray::OnMenu()
+@@ -1709,6 +1755,7 @@ bool CDVDInputStreamBluray::OnMenu()
    // internal tracking state would be wrong. So just process and return.
    if(bd_user_input(m_bd, -1, BD_VK_POPUP) >= 0)
    {
@@ -134,7 +134,7 @@ index 1cc3cacb99..f6e96a373c 100644
      return true;
    }
  
-@@ -1674,6 +1721,7 @@ bool CDVDInputStreamBluray::OnMenu()
+@@ -1716,6 +1763,7 @@ bool CDVDInputStreamBluray::OnMenu()
  
    if (bd_user_input(m_bd, -1, BD_VK_ROOT_MENU) >= 0)
    {
@@ -142,7 +142,7 @@ index 1cc3cacb99..f6e96a373c 100644
      return true;
    }
  
-@@ -1683,6 +1731,7 @@ bool CDVDInputStreamBluray::OnMenu()
+@@ -1725,6 +1773,7 @@ bool CDVDInputStreamBluray::OnMenu()
      CLog::Log(LOGDEBUG, "CDVDInputStreamBluray::OnMenu - root failed");
      return false;
    }
@@ -151,17 +151,14 @@ index 1cc3cacb99..f6e96a373c 100644
  }
  
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index 0c1b6b0d45..e884f40a53 100644
+index 1202ebee..9495b36e 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-@@ -313,6 +313,7 @@ protected:
+@@ -318,6 +318,7 @@ protected:
      bool NextEvent();
      int ReadEvent(uint8_t* buf, int size);
      void RunProgram();
 +    void ProcessInput();
  
      /*!
-      * \brief Read the clip information of a play item of the playlist being played.
--- 
-2.53.0
-
+      * \brief Whether so many reads in a row have failed that the disc is taken to have gone.

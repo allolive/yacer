@@ -551,10 +551,10 @@ index e1b6094e..03871c0b 100644
 +  std::map<std::string, std::shared_ptr<const EntryPoints>> m_mvcEntryPoints;
  };
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index db634295..5ef83a6d 100644
+index eee4da15..9083ed84 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -87,6 +87,7 @@ CDVDInputStreamBluray::CDVDInputStreamBluray(IVideoPlayer* player, const CFileIt
+@@ -94,6 +94,7 @@ CDVDInputStreamBluray::CDVDInputStreamBluray(IVideoPlayer* player, const CFileIt
  #ifdef HAVE_LIBBLURAY_BDJ
    memset(&m_argb,  0, sizeof(m_argb));
  #endif
@@ -562,15 +562,15 @@ index db634295..5ef83a6d 100644
  }
  
  CDVDInputStreamBluray::~CDVDInputStreamBluray()
-@@ -98,6 +99,7 @@ void CDVDInputStreamBluray::Abort()
+@@ -104,6 +105,7 @@ CDVDInputStreamBluray::~CDVDInputStreamBluray()
+ void CDVDInputStreamBluray::Abort()
  {
-   m_hold = HOLD_EXIT;
    m_aborted = true;
 +  m_clipReader.Abort();
  
    // the extension's file may be waiting out a stalled source on the player thread
    std::unique_lock lock(m_mvcInputLock);
-@@ -462,6 +464,10 @@ bool CDVDInputStreamBluray::GetCacheStatus(XFILE::SCacheStatus* status)
+@@ -469,6 +471,10 @@ bool CDVDInputStreamBluray::GetCacheStatus(XFILE::SCacheStatus* status)
  void CDVDInputStreamBluray::SetReadRate(uint32_t rate)
  {
    m_clipReader.SetReadRate(rate);
@@ -581,7 +581,7 @@ index db634295..5ef83a6d 100644
  }
  
  // close file and reset everything
-@@ -1661,54 +1667,50 @@ bool CDVDInputStreamBluray::OpenBaseClip()
+@@ -1768,54 +1774,50 @@ bool CDVDInputStreamBluray::OpenBaseClip()
    return OpenMVCDemux(clip);
  }
  
@@ -665,10 +665,10 @@ index db634295..5ef83a6d 100644
  }
  
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index 4ec8588a..820185f5 100644
+index 5bfbdd99..353cb4b8 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-@@ -215,6 +215,7 @@ protected:
+@@ -228,6 +228,7 @@ protected:
  
    bool OpenBaseClip();
    bool OpenMVCDemux(int playItem);

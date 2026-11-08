@@ -24,10 +24,10 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  2 files changed, 38 insertions(+), 7 deletions(-)
 
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index 4bdd684..03b7c9b 100644
+index 0ea14752..b9a1991c 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -1191,10 +1191,40 @@ void CDVDInputStreamBluray::OverlayFlush(int64_t pts, bool kept, int onlyPlane)
+@@ -1224,10 +1224,40 @@ void CDVDInputStreamBluray::OverlayFlush(int64_t pts)
    }
  
    m_player->OnDiscNavResult(static_cast<void*>(&group), BD_EVENT_MENU_OVERLAY);
@@ -69,7 +69,7 @@ index 4bdd684..03b7c9b 100644
  void CDVDInputStreamBluray::OverlayCallback(const BD_OVERLAY * const ov)
  {
  #if(BD_OVERLAY_INTERFACE_VERSION >= 2)
-@@ -1765,12 +1795,12 @@ bool CDVDInputStreamBluray::IsInMenu()
+@@ -1807,12 +1837,12 @@ bool CDVDInputStreamBluray::IsInMenu()
    if(m_bd == nullptr || !m_navmode)
      return false;
  
@@ -89,13 +89,13 @@ index 4bdd684..03b7c9b 100644
  
  void CDVDInputStreamBluray::SkipStill()
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index 784d649..42b70d5 100644
+index fe725575..3edd15d6 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 @@ -229,6 +229,7 @@ protected:
    struct SPlane;
  
-   void OverlayFlush(int64_t pts, bool kept = false, int onlyPlane = -1);
+   void OverlayFlush(int64_t pts);
 +  bool MenuGraphicsShown() const;
    void OverlayClose();
    static void OverlayClear(SPlane& plane, int x, int y, int w, int h);
