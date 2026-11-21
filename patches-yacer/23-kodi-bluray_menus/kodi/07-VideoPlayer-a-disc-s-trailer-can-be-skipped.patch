@@ -23,10 +23,10 @@ the one shown. A still picture is left to its own timer.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index 5408cc77a2..358197dcd5 100644
+index 34e6488f..1596d6bd 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -2021,6 +2021,10 @@ void CDVDInputStreamBluray::SetupPlayerSettings()
+@@ -2065,6 +2065,10 @@ void CDVDInputStreamBluray::SetupPlayerSettings()
    }
    bd_set_player_setting(m_bd, BLURAY_PLAYER_SETTING_REGION_CODE, static_cast<uint32_t>(region));
    bd_set_player_setting(m_bd, BLURAY_PLAYER_SETTING_PARENTAL, 99);
@@ -38,11 +38,11 @@ index 5408cc77a2..358197dcd5 100644
  #if (BLURAY_VERSION >= BLURAY_VERSION_CODE(1, 0, 2))
    bd_set_player_setting(m_bd, BLURAY_PLAYER_SETTING_PLAYER_PROFILE, BLURAY_PLAYER_PROFILE_6_v3_1);
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-index bc07b9c31f..e71962ea77 100644
+index 27e17db2..af96c76d 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-@@ -5468,6 +5468,37 @@ bool CVideoPlayer::SeekScene(Direction seekDirection)
-   return false;
+@@ -5575,6 +5575,37 @@ bool CVideoPlayer::SeekScene(Direction seekDirection)
+   return true;
  }
  
 +bool CVideoPlayer::SkipDiscTitle()
@@ -79,7 +79,7 @@ index bc07b9c31f..e71962ea77 100644
  void CVideoPlayer::GetGeneralInfo(std::string& strGeneralInfo)
  {
    if (!m_bStop)
-@@ -6784,7 +6815,7 @@ bool CVideoPlayer::OnAction(const CAction &action)
+@@ -6929,7 +6960,7 @@ bool CVideoPlayer::OnAction(const CAction &action)
          CLog::Log(LOGDEBUG, " - pushed next in menu, stream will decide");
          if (pMenus->CanSeek() && GetChapterCount() > 0 && GetChapter() < GetChapterCount())
            m_messenger.Put(std::make_shared<CDVDMsgPlayerSeekChapter>(GetChapter() + 1));
@@ -88,7 +88,7 @@ index bc07b9c31f..e71962ea77 100644
            pMenus->OnNext();
  
          m_processInfo->SeekFinished(0);
-@@ -6915,6 +6946,14 @@ bool CVideoPlayer::OnAction(const CAction &action)
+@@ -7060,6 +7091,14 @@ bool CVideoPlayer::OnAction(const CAction &action)
        }
        else if (SeekScene(Direction::FORWARD))
          return true;
@@ -104,10 +104,10 @@ index bc07b9c31f..e71962ea77 100644
          break;
      case ACTION_PREV_ITEM:
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.h b/xbmc/cores/VideoPlayer/VideoPlayer.h
-index 682bfbe9e3..d1d79e6e07 100644
+index b53693f3..3352b8e2 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.h
-@@ -561,6 +561,7 @@ protected:
+@@ -567,6 +567,7 @@ protected:
    void GetGeneralInfo(std::string& strVideoInfo);
    int64_t GetUpdatedTime();
    int64_t GetTime() const;

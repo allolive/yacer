@@ -27,12 +27,12 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  2 files changed, 25 insertions(+), 4 deletions(-)
 
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index 95add7d5..aacc0c39 100644
+index ebd7d4cf..87142558 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -98,6 +98,12 @@ void CDVDInputStreamBluray::Abort()
+@@ -104,6 +104,12 @@ CDVDInputStreamBluray::~CDVDInputStreamBluray()
+ void CDVDInputStreamBluray::Abort()
  {
-   m_hold = HOLD_EXIT;
    m_aborted = true;
 +
 +  // the extension's file may be waiting out a stalled source on the player thread
@@ -43,7 +43,7 @@ index 95add7d5..aacc0c39 100644
  }
  
  bool CDVDInputStreamBluray::IsEOF()
-@@ -1654,9 +1660,15 @@ bool CDVDInputStreamBluray::OpenMVCDemux(int playItem)
+@@ -1761,9 +1767,15 @@ bool CDVDInputStreamBluray::OpenMVCDemux(int playItem)
    CLog::Log(LOGDEBUG, "CDVDInputStreamBluray::OpenMVCDemuxer(): Opening MVC extension stream at {}", strFileName);
  
    CFileItem fileitem(CURL(strFileName), false);
@@ -61,7 +61,7 @@ index 95add7d5..aacc0c39 100644
    if (!m_pMVCInput->Open())
    {
      CloseMVCDemux();
-@@ -1688,8 +1700,14 @@ bool CDVDInputStreamBluray::CloseMVCDemux()
+@@ -1795,8 +1807,14 @@ bool CDVDInputStreamBluray::CloseMVCDemux()
      m_pMVCDemux = nullptr;
    }
  
@@ -79,10 +79,10 @@ index 95add7d5..aacc0c39 100644
    return true;
  }
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index b9e6e1fd..8fad6b20 100644
+index d1b39d35..f5f4d8df 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-@@ -239,6 +239,9 @@ protected:
+@@ -252,6 +252,9 @@ protected:
    // MVC related members
    CDemuxMVC*          m_pMVCDemux = nullptr;
    CDVDInputStream    *m_pMVCInput = nullptr;

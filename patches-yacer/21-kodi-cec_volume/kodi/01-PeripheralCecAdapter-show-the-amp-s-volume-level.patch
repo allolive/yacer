@@ -31,9 +31,11 @@ state at once and the level once the amp answers.
 
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
+diff --git a/xbmc/peripherals/devices/PeripheralCecAdapter.cpp b/xbmc/peripherals/devices/PeripheralCecAdapter.cpp
+index fdd79a03..951787cf 100644
 --- a/xbmc/peripherals/devices/PeripheralCecAdapter.cpp
 +++ b/xbmc/peripherals/devices/PeripheralCecAdapter.cpp
-@@ -54,6 +54,8 @@
+@@ -54,6 +54,8 @@ using namespace XBMCAddon;
  #define SCREENSAVER_TIMEOUT 20
  #define VOLUME_CHANGE_TIMEOUT 250
  #define VOLUME_REFRESH_TIMEOUT 100
@@ -42,7 +44,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  
  #define LOCALISED_ID_TV 36037
  #define LOCALISED_ID_AVR 36038
-@@ -443,6 +445,8 @@
+@@ -443,6 +445,8 @@ void CPeripheralCecAdapter::Process(void)
      m_bStarted = false;
      m_bIsRunning = false;
    }
@@ -51,7 +53,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  }
  
  bool CPeripheralCecAdapter::HasAudioControl(void)
-@@ -481,8 +485,13 @@
+@@ -481,8 +485,13 @@ void CPeripheralCecAdapter::SetVolumeTarget(cec_logical_address address)
      appVolume->SetVolume(CApplicationVolumeHandling::VOLUME_MAXIMUM, false);
    }
  
@@ -67,7 +69,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  }
  
  cec_logical_address CPeripheralCecAdapter::GetTvVolumeTarget(void)
-@@ -504,13 +513,68 @@
+@@ -504,13 +513,68 @@ void CPeripheralCecAdapter::SetAmpControlsVolume(bool bSetTo)
    SetVolumeTarget(bToAmp ? CECDEVICE_AUDIOSYSTEM : GetTvVolumeTarget());
  }
  
@@ -142,7 +144,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  }
  
  void CPeripheralCecAdapter::ProcessVolumeChange(void)
-@@ -575,43 +639,32 @@
+@@ -575,43 +639,32 @@ void CPeripheralCecAdapter::ProcessVolumeChange(void)
        break;
      case VOLUME_CHANGE_MUTE:
        m_cecAdapter->SendKeypress(target, CEC_USER_CONTROL_CODE_MUTE, false);
@@ -194,7 +196,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  }
  
  bool CPeripheralCecAdapter::IsMuted(void)
-@@ -795,8 +848,7 @@
+@@ -795,8 +848,7 @@ void CPeripheralCecAdapter::CecCommand(void* cbParam, const cec_command* command
          break;
        case CEC_OPCODE_REPORT_AUDIO_STATUS:
          if (command->initiator == CECDEVICE_AUDIOSYSTEM && command->parameters.size == 1)
@@ -204,7 +206,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
          break;
        default:
          break;
-@@ -1753,10 +1805,7 @@
+@@ -1753,10 +1805,7 @@ void CPeripheralCecAdapterUpdateThread::UpdateAudioSystemStatus(void)
    m_adapter->SetAmpControlsVolume(true);
  
    /* adopt the amp's mute state, so the first mute keypress does not toggle it the wrong way */
@@ -213,12 +215,14 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 -    m_adapter->SetAmpMuted((audioStatus & CEC_AUDIO_MUTE_STATUS_MASK) ==
 -                           CEC_AUDIO_MUTE_STATUS_MASK);
 +  m_adapter->RequestAmpAudioStatus();
- 
-   return strAmpName;
  }
+ 
+ bool CPeripheralCecAdapterUpdateThread::SetInitialConfiguration(void)
+diff --git a/xbmc/peripherals/devices/PeripheralCecAdapter.h b/xbmc/peripherals/devices/PeripheralCecAdapter.h
+index 1261637e..6198baa4 100644
 --- a/xbmc/peripherals/devices/PeripheralCecAdapter.h
 +++ b/xbmc/peripherals/devices/PeripheralCecAdapter.h
-@@ -188,7 +188,21 @@
+@@ -188,7 +188,21 @@ private:
     *               Kodi when the TV is not expected to act on them.
     */
    void SetAmpControlsVolume(bool bSetTo);

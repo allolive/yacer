@@ -614,10 +614,10 @@ index 1cb7b333..4c19d604 100644
  
  core_add_library(dvdinputstreams)
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index bb300331..905260fb 100644
+index 32f6b8c6..f3e27ffe 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -58,6 +58,16 @@ static int read_blocks(void* handle, void* buf, int lba, int num_blocks)
+@@ -65,6 +65,16 @@ static int read_blocks(void* handle, void* buf, int lba, int num_blocks)
    return blurayStream->ReadBlocks(reinterpret_cast<uint8_t*>(buf), lba, num_blocks);
  }
  
@@ -634,15 +634,7 @@ index bb300331..905260fb 100644
  static void bluray_overlay_cb(void *this_gen, const BD_OVERLAY * ov)
  {
    static_cast<CDVDInputStreamBluray*>(this_gen)->OverlayCallback(ov);
-@@ -88,6 +98,7 @@ CDVDInputStreamBluray::~CDVDInputStreamBluray()
- void CDVDInputStreamBluray::Abort()
- {
-   m_hold = HOLD_EXIT;
-+  m_aborted = true;
- }
- 
- bool CDVDInputStreamBluray::IsEOF()
-@@ -270,6 +281,7 @@ bool CDVDInputStreamBluray::Open()
+@@ -277,6 +287,7 @@ bool CDVDInputStreamBluray::Open()
    else
    {
      m_rootPath = root;
@@ -650,7 +642,7 @@ index bb300331..905260fb 100644
  
  #if defined(HAS_UDFREAD)
      // Only in files mode does libbluray reach the disc through Kodi's filesystem, opening a dozen
-@@ -279,7 +291,7 @@ bool CDVDInputStreamBluray::Open()
+@@ -286,7 +297,7 @@ bool CDVDInputStreamBluray::Open()
      m_udfMount.emplace(root);
  #endif
  
@@ -659,7 +651,7 @@ index bb300331..905260fb 100644
      {
        CLog::Log(LOGERROR, "CDVDInputStreamBluray::Open - failed to open {} in files mode",
                  CURL::GetRedacted(root));
-@@ -424,6 +436,29 @@ bool CDVDInputStreamBluray::Open()
+@@ -431,6 +442,29 @@ bool CDVDInputStreamBluray::Open()
    return true;
  }
  
@@ -689,7 +681,7 @@ index bb300331..905260fb 100644
  // close file and reset everything
  void CDVDInputStreamBluray::Close()
  {
-@@ -439,6 +474,7 @@ void CDVDInputStreamBluray::Close()
+@@ -446,6 +480,7 @@ void CDVDInputStreamBluray::Close()
    m_bd = nullptr;
    m_pstream.reset();
    m_rootPath.clear();
@@ -697,7 +689,7 @@ index bb300331..905260fb 100644
    m_readPos = 0;
    m_clipSpans.clear();
    m_hasMVCExtension = false;
-@@ -609,6 +645,7 @@ void CDVDInputStreamBluray::ProcessEvent() {
+@@ -622,6 +657,7 @@ void CDVDInputStreamBluray::ProcessEvent() {
      CLog::Log(LOGDEBUG, "CDVDInputStreamBluray - BD_EVENT_PLAYITEM {}", m_event.param);
      if (m_titleInfo && m_event.param < m_titleInfo->clip_count)
      {
@@ -706,7 +698,7 @@ index bb300331..905260fb 100644
        UpdateClipInfo(m_event.param);
        OpenClipSpan();
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index e633deef..a5f1137c 100644
+index c7873f4c..52ce39d1 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 @@ -9,6 +9,7 @@
@@ -717,15 +709,7 @@ index e633deef..a5f1137c 100644
  #include "DVDInputStream.h"
  #include "threads/CriticalSection.h"
  #if defined(HAS_UDFREAD)
-@@ -17,6 +18,7 @@
- 
- #include <chrono>
- #include <list>
-+#include <atomic>
- #include <memory>
- #include <optional>
- #include <string>
-@@ -26,6 +28,7 @@ extern "C"
+@@ -27,6 +28,7 @@ extern "C"
  {
  #include <libbluray/bluray.h>
  #include <libbluray/bluray-version.h>
@@ -733,7 +717,7 @@ index e633deef..a5f1137c 100644
  #include <libbluray/keys.h>
  #include <libbluray/overlay.h>
  #include <libbluray/player_settings.h>
-@@ -53,6 +56,7 @@ class CDVDOverlayImage;
+@@ -54,6 +56,7 @@ class CDVDOverlayImage;
  class IVideoPlayer;
  class CDVDDemux;
  
@@ -741,7 +725,7 @@ index e633deef..a5f1137c 100644
  class CDVDInputStreamBluray
    : public CDVDInputStream
    , public CDVDInputStream::IDisplayTime
-@@ -75,6 +79,12 @@ public:
+@@ -76,6 +79,12 @@ public:
    int64_t GetLength() override;
    int GetBlockSize() override { return 6144; }
    ENextStream NextStream() override;
@@ -754,21 +738,20 @@ index e633deef..a5f1137c 100644
  
  
    /* IMenus */
-@@ -287,6 +297,9 @@ protected:
+@@ -313,6 +322,8 @@ protected:
  
      std::unique_ptr<CDVDInputStreamFile> m_pstream;
      std::string m_rootPath;
-+    std::atomic<bool> m_aborted{false};
 +    //! the clips of a disc read through Kodi's filesystem
 +    CBlurayClipReader m_clipReader{m_aborted};
  
  #if defined(HAS_UDFREAD)
      // Keeps a disc image's UDF volume mounted for as long as the disc is open
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-index 8d053398..fd4da5e4 100644
+index c71fb9fe..29e0a6f7 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-@@ -1032,7 +1032,7 @@ bool CVideoPlayer::OpenDemuxStream()
+@@ -1037,7 +1037,7 @@ bool CVideoPlayer::OpenDemuxStream()
    m_processInfo->SetStateRealtime(false);
  
    int64_t len = m_pInputStream->GetLength();
@@ -777,7 +760,7 @@ index 8d053398..fd4da5e4 100644
    if (len > 0 && tim > 0)
      m_pInputStream->SetReadRate(static_cast<uint32_t>(len * 1000 / tim));
  
-@@ -2315,7 +2315,7 @@ CacheInfo CVideoPlayer::GetCachingTimes()
+@@ -2323,7 +2323,7 @@ CacheInfo CVideoPlayer::GetCachingTimes()
      return info;
  
    double queueTime = GetQueueTime();

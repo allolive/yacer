@@ -16,9 +16,11 @@ from a real 'off'.
 
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
+diff --git a/xbmc/peripherals/devices/PeripheralCecAdapter.cpp b/xbmc/peripherals/devices/PeripheralCecAdapter.cpp
+index 951787cf..87d7e9ea 100644
 --- a/xbmc/peripherals/devices/PeripheralCecAdapter.cpp
 +++ b/xbmc/peripherals/devices/PeripheralCecAdapter.cpp
-@@ -56,6 +56,8 @@
+@@ -56,6 +56,8 @@ using namespace XBMCAddon;
  #define VOLUME_REFRESH_TIMEOUT 100
  #define AUDIO_STATUS_RETRIES 3
  #define AUDIO_STATUS_RETRY_DELAY 200ms
@@ -27,7 +29,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  
  #define LOCALISED_ID_TV 36037
  #define LOCALISED_ID_AVR 36038
-@@ -1791,10 +1793,22 @@
+@@ -1791,10 +1793,21 @@ void CPeripheralCecAdapterUpdateThread::UpdateAudioSystemStatus(void)
  #if CEC_LIB_HAS_SYSTEM_AUDIO_MODE_STATUS
    /* an amp only acts on volume keypresses while system audio mode is on. handing it the volume
       while it is off leaves the user with no working volume control at all. */
@@ -45,11 +47,10 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 +
 +  if (systemAudioMode != CEC_SYSTEM_AUDIO_STATUS_ON)
    {
--    CLog::Log(LOGDEBUG, "{} - CEC capable amplifier found ({}), but system audio mode is off",
--              __FUNCTION__, ampName);
-+    CLog::Log(LOGDEBUG, "{} - CEC capable amplifier found ({}), but system audio mode is {}",
-+              __FUNCTION__, ampName,
-+              systemAudioMode == CEC_SYSTEM_AUDIO_STATUS_OFF ? "off" : "unknown");
+-    CLog::Log(LOGDEBUG, "{} - CEC capable amplifier found, but system audio mode is off",
+-              __FUNCTION__);
++    CLog::Log(LOGDEBUG, "{} - CEC capable amplifier found, but system audio mode is {}",
++              __FUNCTION__, systemAudioMode == CEC_SYSTEM_AUDIO_STATUS_OFF ? "off" : "unknown");
      m_adapter->SetAmpControlsVolume(false);
-     return strAmpName;
+     return;
    }

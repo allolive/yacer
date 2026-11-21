@@ -27,10 +27,10 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  2 files changed, 22 insertions(+)
 
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index e9305b2af8..efc5fe706f 100644
+index e571355b..0ea14752 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -507,6 +507,7 @@ void CDVDInputStreamBluray::Close()
+@@ -513,6 +513,7 @@ void CDVDInputStreamBluray::Close()
    m_hasMVCExtension = false;
    m_clipStart.clear();
    m_pending.clear();
@@ -38,9 +38,9 @@ index e9305b2af8..efc5fe706f 100644
  
  #if defined(HAS_UDFREAD)
    // Released last, as the files opened from the volume are closed above
-@@ -832,6 +833,26 @@ int CDVDInputStreamBluray::Read(uint8_t* buf, int buf_size)
-         return result;
-       }
+@@ -847,6 +848,26 @@ int CDVDInputStreamBluray::Read(uint8_t* buf, int buf_size)
+       if (result > 0)
+         m_readErrors = 0;
  
 +      // A title's end resumes an HDMV program, whose next read starts what it plays next; the
 +      // end again means the program has ended, and libbluray reports it on every read from then
@@ -52,7 +52,7 @@ index e9305b2af8..efc5fe706f 100644
 +          CLog::Log(LOGINFO, "CDVDInputStreamBluray - the disc's program has ended, at title {} playlist {:05}",
 +                    m_title ? m_title->id_ref : 0, m_titleInfo ? m_titleInfo->playlist : 0);
 +          m_event.event = BD_EVENT_NONE;
-+          m_hold = HOLD_EXIT;
++          m_hold = HOLD_ERROR;
 +          return -1;
 +        }
 +        if (m_endOfTitle)
@@ -66,17 +66,14 @@ index e9305b2af8..efc5fe706f 100644
        switch(m_event.event) {
          case BD_EVENT_SEEK:
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index 928aaa3223..784d649997 100644
+index 6467c48b..fe725575 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-@@ -299,6 +299,7 @@ protected:
-   } m_hold = HOLD_NONE;
+@@ -304,6 +304,7 @@ protected:
+   unsigned int m_readErrors = 0;
    BD_EVENT m_event;
    std::deque<BD_EVENT> m_pending; //!< events taken from libbluray to let the disc's program run
 +  bool m_endOfTitle = false; //!< the last read ended the title and brought nothing else
  #ifdef HAVE_LIBBLURAY_BDJ
    struct bd_argb_buffer_s m_argb;
  #endif
--- 
-2.53.0
-

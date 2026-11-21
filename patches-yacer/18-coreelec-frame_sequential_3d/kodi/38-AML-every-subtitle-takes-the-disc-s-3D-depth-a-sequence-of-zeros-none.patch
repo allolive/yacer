@@ -22,6 +22,28 @@ lose the PG-only flag that 09 added.
 
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
+diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
+index 316c7ee1..5acb0d55 100644
+--- a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
++++ b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
+@@ -63,7 +63,6 @@ public:
+     m_setForcedMargins = src.m_setForcedMargins;
+     m_discMenu = src.m_discMenu;
+     m_stereoView = src.m_stereoView;
+-    m_isPgs = src.m_isPgs;
+   }
+ 
+   virtual ~CDVDOverlay() = default;
+@@ -136,7 +135,6 @@ public:
+   DVDOverlayStereoView m_stereoView;
+ 
+   int m_3dSubtitleDepth;
+-  bool m_isPgs{false}; //!< a Blu-ray PG subtitle, which can follow the disc's 3D depth
+ protected:
+   DVDOverlayType m_type;
+   bool m_enableTextAlign;
+diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp
+index 8dbfdb80..1af10d44 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp
 @@ -300,7 +300,6 @@ std::shared_ptr<CDVDOverlay> CDVDOverlayCodecFFmpeg::GetOverlay()
@@ -32,24 +54,8 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
      overlay->linesize = rect.w;
      overlay->pixels.resize(rect.w * rect.h);
      overlay->palette.resize(rect.nb_colors);
---- a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
-+++ b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
-@@ -62,7 +62,6 @@ public:
-     m_setForcedMargins = src.m_setForcedMargins;
-     m_stereoView = src.m_stereoView;
-     m_isMenu = src.m_isMenu;
--    m_isPgs = src.m_isPgs;
-   }
- 
-   virtual ~CDVDOverlay() = default;
-@@ -126,7 +125,6 @@ public:
-   DVDOverlayStereoView m_stereoView;
- 
-   int m_3dSubtitleDepth;
--  bool m_isPgs{false}; //!< a Blu-ray PG subtitle, which can follow the disc's 3D depth
- protected:
-   DVDOverlayType m_type;
-   bool m_enableTextAlign;
+diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
+index 8a87cfd8..e26f5c64 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
 @@ -109,12 +109,19 @@ inline bool ParseOfmd(const uint8_t* data, size_t size, int lengthSize, Offsets&
@@ -97,6 +103,8 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  };
  
  } // namespace AML_MVC_DEPTH
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
+index a6164b74..055387c0 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
 @@ -312,7 +312,7 @@ void CRenderer::Render(COverlay* o)
@@ -108,7 +116,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  
    o->Render(state);
  }
-@@ -772,10 +772,7 @@ std::shared_ptr<COverlay> CRenderer::Convert(SElement& e)
+@@ -698,10 +698,7 @@ std::shared_ptr<COverlay> CRenderer::Convert(SElement& e)
  
    // the 3D depth follows the video picture: this buffer's, on the render thread
    if (r)
@@ -119,6 +127,8 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
    return r;
  }
  
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
+index a210e05b..c57052b4 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
 @@ -94,7 +94,6 @@ namespace OVERLAY {
@@ -129,6 +139,8 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  
    protected:
      /*!
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
+index f820ebbb..14f48bee 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 @@ -677,7 +677,7 @@ void ScaleRgbaLight(std::vector<uint32_t>& rgba, float factor)
@@ -156,6 +168,8 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
    {
      const int width = CServiceBroker::GetWinSystem()->GetGfxContext().GetWidth();
      depth = static_cast<int>(std::lround(*subtitleDepth * width / 1920.0));
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
+index b5911e5f..fd142e83 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
 @@ -138,6 +138,6 @@ void FindVisibleBox(const uint8_t* src,

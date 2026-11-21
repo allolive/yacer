@@ -16,9 +16,11 @@ and returns at most the blocks the buffer holds. Clamp edid->extensions to
 that, fixing the block 0 checksum, and free the copy after use. Only the
 size is bounded; a concurrent DDC re-read can still leave the content
 inconsistent, which needs a separate change. Not exercised on hardware.
+diff --git a/drivers/drm/meson_hdmi.c b/drivers/drm/meson_hdmi.c
+index 61fc8dc..7a1e053 100644
 --- a/drivers/drm/meson_hdmi.c
 +++ b/drivers/drm/meson_hdmi.c
-@@ -538,6 +538,29 @@
+@@ -548,6 +548,29 @@ static int meson_hdmitx_mode_probed_add(int count, int *vics,
  	return ret;
  }
  
@@ -48,7 +50,7 @@ inconsistent, which needs a separate change. Not exercised on hardware.
  int meson_hdmitx_get_modes(struct drm_connector *connector)
  {
  	u32 vrr_cap = 0;
-@@ -558,11 +591,12 @@
+@@ -568,11 +591,12 @@ int meson_hdmitx_get_modes(struct drm_connector *connector)
  		return count;
  	}
  
@@ -62,7 +64,7 @@ inconsistent, which needs a separate change. Not exercised on hardware.
  
  	vrr_list = kcalloc(MAX_VRR_GROUP_VIC_NUM, sizeof(int),  GFP_KERNEL);
  	tmp = kcalloc(MAX_VRR_GROUP_VIC_NUM, sizeof(int),  GFP_KERNEL);
-@@ -2579,9 +2613,10 @@
+@@ -2591,9 +2615,10 @@ static void meson_hdmitx_hpd_cb(void *data)
  #ifdef CONFIG_CEC_NOTIFIER
  	if (hdmitx_get_hpd_state(tx_comm)) {
  		DRM_DEBUG("%s[%d]\n", __func__, __LINE__);
@@ -71,10 +73,10 @@ inconsistent, which needs a separate change. Not exercised on hardware.
  		cec_notifier_set_phys_addr_from_edid(am_hdmi->cec_notifier,
  						     pedid);
 +		kfree(pedid);
- 		if (mode_config.suspend_state)
- 			drm_mode_config_helper_resume(drm);
- 	} else {
-@@ -2739,9 +2774,10 @@
+ 		mutex_lock(&priv->hpd_pm_lock);
+ 		priv->hpd_connected = true;
+ 		if (!priv->pm_suspended && drm->mode_config.suspend_state)
+@@ -2758,9 +2783,10 @@ int meson_hdmitx_dev_bind(struct drm_device *drm,
  #ifdef CONFIG_CEC_NOTIFIER
  	if (hdmitx_get_hpd_state(tx_comm)) {
  		DRM_DEBUG("%s[%d]\n", __func__, __LINE__);

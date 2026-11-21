@@ -23,10 +23,10 @@ Amlogic dependency; CoreELEC opts in separately in its ALSA integration.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 
 diff --git a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.cpp b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.cpp
-index b3585294a1..4f71ca76ff 100644
+index bc17d0ad..286470a7 100644
 --- a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.cpp
 +++ b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.cpp
-@@ -405,6 +405,9 @@ void CActiveAESink::StateMachine(int signal, Protocol *port, Message *msg)
+@@ -408,6 +408,9 @@ void CActiveAESink::StateMachine(int signal, Protocol *port, Message *msg)
          case CSinkControlProtocol::STREAMING:
            m_extStreaming = *(bool*)msg->data;
            SetSilenceTimer();
@@ -36,7 +36,7 @@ index b3585294a1..4f71ca76ff 100644
            if (!m_extSilenceTimer.IsTimePast())
            {
              m_state = S_TOP_CONFIGURED_SILENCE;
-@@ -435,6 +438,7 @@ void CActiveAESink::StateMachine(int signal, Protocol *port, Message *msg)
+@@ -438,6 +441,7 @@ void CActiveAESink::StateMachine(int signal, Protocol *port, Message *msg)
          switch (signal)
          {
          case CSinkDataProtocol::DRAIN:
@@ -44,7 +44,7 @@ index b3585294a1..4f71ca76ff 100644
            m_sink->Drain();
            msg->Reply(CSinkDataProtocol::ACC);
            m_state = S_TOP_CONFIGURED_IDLE;
-@@ -566,6 +570,7 @@ void CActiveAESink::StateMachine(int signal, Protocol *port, Message *msg)
+@@ -569,6 +573,7 @@ void CActiveAESink::StateMachine(int signal, Protocol *port, Message *msg)
            }
            else
            {
@@ -52,7 +52,7 @@ index b3585294a1..4f71ca76ff 100644
              m_sink->Drain();
              m_state = S_TOP_CONFIGURED_IDLE;
              if (m_extAppFocused)
-@@ -1061,6 +1066,7 @@ void CActiveAESink::OpenSink()
+@@ -1064,6 +1069,7 @@ void CActiveAESink::OpenSink()
  
  void CActiveAESink::CloseSink(const bool drain)
  {
@@ -60,7 +60,7 @@ index b3585294a1..4f71ca76ff 100644
    if (!m_sink)
      return;
  
-@@ -1096,6 +1102,7 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
+@@ -1099,6 +1105,7 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
    int retry = 0;
    unsigned int written = 0;
    AEDelayStatus status;
@@ -68,7 +68,7 @@ index b3585294a1..4f71ca76ff 100644
  
    if (m_requestedFormat.m_dataFormat == AE_FMT_RAW)
    {
-@@ -1109,8 +1116,12 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
+@@ -1112,8 +1119,12 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
        }
        else if (samples->pkt->pause_burst_ms > 0)
        {
@@ -83,7 +83,7 @@ index b3585294a1..4f71ca76ff 100644
          if (!m_packer->PackPause(m_sinkFormat.m_streamInfo, samples->pkt->pause_burst_ms, burst))
            skipSwap = true;
        }
-@@ -1121,6 +1132,7 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
+@@ -1124,6 +1135,7 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
        packBuffer = m_packer->GetBuffer();
        buffer = &packBuffer;
        totalFrames = size / m_sinkFormat.m_frameSize;
@@ -91,7 +91,7 @@ index b3585294a1..4f71ca76ff 100644
        frames = totalFrames;
  
        switch(m_swapState)
-@@ -1165,6 +1177,7 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
+@@ -1168,6 +1180,7 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
        retry++;
        if (retry > 4)
        {
@@ -99,7 +99,7 @@ index b3585294a1..4f71ca76ff 100644
          m_extError = true;
          CLog::Log(LOGERROR, "CActiveAESink::OutputSamples - failed");
          status.SetDelay(0);
-@@ -1179,6 +1192,7 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
+@@ -1182,6 +1195,7 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
      }
      else if (written > maxFrames)
      {
@@ -107,7 +107,7 @@ index b3585294a1..4f71ca76ff 100644
        m_extError = true;
        CLog::Log(LOGERROR, "CActiveAESink::OutputSamples - sink returned error");
        status.SetDelay(0);
-@@ -1196,6 +1210,11 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
+@@ -1199,6 +1213,11 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
        m_stats->UpdateSinkDelay(status, samples->pool ? written : 0);
    }
  
@@ -116,11 +116,11 @@ index b3585294a1..4f71ca76ff 100644
 +  if (realIECFrame)
 +    m_hasSubmittedIECFrame = true;
 +
-   if (m_requestedFormat.m_dataFormat == AE_FMT_RAW)
-     m_stats->UpdateSinkDelay(status, samples->pool ? 1 : 0);
- 
+   // A packet dropped for a/v sync has no frames and never enters the loop above. Query the
+   // sink anyway, otherwise the engine is told the sink holds no audio at all and the next
+   // sync error measurements are off by the whole sink delay.
 diff --git a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.h b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.h
-index 69d5a4b70d..527f901512 100644
+index 69d5a4b7..527f9015 100644
 --- a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.h
 +++ b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.h
 @@ -164,6 +164,9 @@ protected:
@@ -134,7 +134,7 @@ index 69d5a4b70d..527f901512 100644
  };
  
 diff --git a/xbmc/cores/AudioEngine/Interfaces/AESink.h b/xbmc/cores/AudioEngine/Interfaces/AESink.h
-index 5637c691e3..9a8cf81ffa 100644
+index d3a688fb..48ff7eb2 100644
 --- a/xbmc/cores/AudioEngine/Interfaces/AESink.h
 +++ b/xbmc/cores/AudioEngine/Interfaces/AESink.h
 @@ -61,6 +61,15 @@ public:
@@ -153,7 +153,7 @@ index 5637c691e3..9a8cf81ffa 100644
    /*!
     * @brief Return a timestamped status structure with delay and sink info
     * @param status structure filled with sink status
-@@ -82,4 +91,3 @@ public:
+@@ -89,4 +98,3 @@ public:
    */
    virtual void SetVolume(float volume) {}
  };
