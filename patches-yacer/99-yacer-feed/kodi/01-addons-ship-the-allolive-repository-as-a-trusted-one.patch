@@ -22,7 +22,7 @@ so the copy shipped here only has to be good enough to find it.
 
 diff --git a/addons/repository.allolive/addon.xml b/addons/repository.allolive/addon.xml
 new file mode 100644
-index 0000000000..b759e103ba
+index 0000000..b759e10
 --- /dev/null
 +++ b/addons/repository.allolive/addon.xml
 @@ -0,0 +1,16 @@
@@ -43,7 +43,7 @@ index 0000000000..b759e103ba
 +  </extension>
 +</addon>
 diff --git a/cmake/installdata/common/addons.txt b/cmake/installdata/common/addons.txt
-index 263e57bb66..7ae17e567b 100644
+index 263e57b..7ae17e5 100644
 --- a/cmake/installdata/common/addons.txt
 +++ b/cmake/installdata/common/addons.txt
 @@ -24,6 +24,7 @@ addons/metadata.local/*
@@ -55,7 +55,7 @@ index 263e57bb66..7ae17e567b 100644
  addons/resource.language.en_gb/*
  addons/resource.uisounds.kodi/*
 diff --git a/system/addon-manifest.xml b/system/addon-manifest.xml
-index 314548d46c..35b72b832d 100644
+index 314548d..35b72b8 100644
 --- a/system/addon-manifest.xml
 +++ b/system/addon-manifest.xml
 @@ -37,6 +37,7 @@
@@ -67,13 +67,13 @@ index 314548d46c..35b72b832d 100644
    <addon>resource.language.en_gb</addon>
    <addon>resource.uisounds.kodi</addon>
 diff --git a/version.txt b/version.txt
-index cfb6155cd1..c1fba34852 100644
+index 4d4dc4f..8dc782d 100644
 --- a/version.txt
 +++ b/version.txt
 @@ -11,7 +11,7 @@ VERSION_MINOR 0
- VERSION_TAG RC1
- VERSION_CODE 21.90.901
- ADDON_API 21.90.901
+ VERSION_TAG RC2
+ VERSION_CODE 21.90.902
+ ADDON_API 21.90.902
 -ADDON_REPOS repository.xbmc.org|https://addons.coreelec.org,repository.coreelec|https://addons.coreelec.org
 +ADDON_REPOS repository.xbmc.org|https://addons.coreelec.org,repository.coreelec|https://addons.coreelec.org,repository.allolive|https://allolive.github.io/kodi_addons
  APP_PACKAGE org.xbmc.kodi

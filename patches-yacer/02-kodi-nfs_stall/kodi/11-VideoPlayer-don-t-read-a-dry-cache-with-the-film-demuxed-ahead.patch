@@ -20,18 +20,20 @@ other start of a 4K episode after the one before it.
 
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
+diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
+index 9e1a5ce..ca85388 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-@@ -1882,7 +1882,7 @@
+@@ -1897,7 +1897,7 @@ void CVideoPlayer::Process()
      // Read nothing while buffering on a dry source: a read that stalls mid-element can
      // end demuxing until the next seek. The hold ends on the cache refilling, which is
      // measured without reading.
 -    if (m_srcUnderrunHold)
 +    if (m_srcUnderrunHold || SourceDryWithFilmAhead())
      {
+       emptySince.reset();
        CThread::Sleep(10ms);
-       continue;
-@@ -2356,6 +2356,36 @@
+@@ -2462,6 +2462,36 @@ CacheInfo CVideoPlayer::GetCachingTimes()
    return info;
  }
  
@@ -68,9 +70,11 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  bool CVideoPlayer::TryEnterSourceUnderrunHold()
  {
    if (m_pInputStream->IsRealtime() || m_pInputStream->IsEOF())
+diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.h b/xbmc/cores/VideoPlayer/VideoPlayer.h
+index f3f86db..65010d6 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.h
-@@ -486,6 +486,7 @@
+@@ -500,6 +500,7 @@ protected:
  
    double GetQueueTime();
    CacheInfo GetCachingTimes();

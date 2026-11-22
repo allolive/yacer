@@ -17,7 +17,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 
 ---
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-index 244b183..3662490 100644
+index 05ef9e0..da45ab9 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 @@ -8,6 +8,8 @@
@@ -29,7 +29,7 @@ index 244b183..3662490 100644
  #include "DynamicDll.h"
  
  #include "cores/VideoPlayer/Interface/TimingConstants.h"
-@@ -2637,6 +2639,7 @@ bool CAMLCodec::OpenDecoder(CDVDStreamInfo &hints, bool doviIsFEL)
+@@ -2637,6 +2639,7 @@ bool CAMLCodec::OpenDecoder(CDVDStreamInfo &hints, bool doviIsFEL, StreamHdrType
    CSysfsPath("/sys/class/video/freerun_mode", 1);
  
    m_opened = true;
@@ -96,7 +96,7 @@ index 244b183..3662490 100644
  
    // update internal vars regardless
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
-index df2086e..542cbdb 100644
+index 20ad84c..6a766f6 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 @@ -89,6 +89,7 @@ public:
@@ -1076,7 +1076,7 @@ index 6e8283c..8716bfa 100644
  endif()
  
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
-index 50ad8d7..7ae3cfb 100644
+index 4c97b39..23cd046 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
 @@ -10,6 +10,7 @@
@@ -1087,7 +1087,7 @@ index 50ad8d7..7ae3cfb 100644
  #include "cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h"
  #include "cores/VideoPlayer/VideoRenderers/RenderFactory.h"
  #include "cores/VideoPlayer/VideoRenderers/RenderFlags.h"
-@@ -263,6 +264,9 @@ std::shared_ptr<CAMLCodec> CRendererAML::QueueFrame(int index, bool setVideoRect
+@@ -273,6 +274,9 @@ std::shared_ptr<CAMLCodec> CRendererAML::QueueFrame(int index, bool setVideoRect
        if (setVideoRect)
          amli->m_amlCodec->SetVideoRect(m_sourceRect, m_destRect);
        m_prevCodec = amli->m_amlCodec;
@@ -1097,7 +1097,7 @@ index 50ad8d7..7ae3cfb 100644
        std::shared_ptr<CAMLCodec> codec = std::move(amli->m_amlCodec); //Mark frame as processed
        m_prevVPts = pts;
        return codec;
-@@ -287,6 +291,7 @@ void CRendererAML::RenderUpdate(int index, int index2, bool clear, unsigned int
+@@ -297,6 +301,7 @@ void CRendererAML::RenderUpdate(int index, int index2, bool clear, unsigned int
      return;
    }
  
@@ -1105,7 +1105,7 @@ index 50ad8d7..7ae3cfb 100644
    QueueFrame(index, true);
    PublishReleasedFrame();
    CAMLCodec::PollFrame();
-@@ -300,6 +305,21 @@ void CRendererAML::PublishReleasedFrame()
+@@ -310,6 +315,21 @@ void CRendererAML::PublishReleasedFrame()
    CAMLFrameMetadataStore::GetInstance().Publish(m_releasedToken, std::move(m_releasedMeta));
  }
  
@@ -1127,7 +1127,7 @@ index 50ad8d7..7ae3cfb 100644
  bool CRendererAML::StartVsyncPresent()
  {
    m_lastWakeVsync = false;
-@@ -326,17 +346,21 @@ bool CRendererAML::WaitVsync()
+@@ -336,17 +356,21 @@ bool CRendererAML::WaitVsync()
        case CAMLCodec::VsyncWake::VSYNC:
        case CAMLCodec::VsyncWake::TIMEOUT:
          m_lastWakeVsync = wake == CAMLCodec::VsyncWake::VSYNC;
@@ -1150,7 +1150,7 @@ index 50ad8d7..7ae3cfb 100644
          break;
        case CAMLCodec::VsyncWake::INTERRUPTED:
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h
-index 166b0c0..7034907 100644
+index 8f45e6b..54b7aec 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h
 @@ -56,6 +56,7 @@ private:
@@ -1162,7 +1162,7 @@ index 166b0c0..7034907 100644
    static const int m_numRenderBuffers = NUM_BUFFERS;
  
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
-index cafa71e..1632da9 100644
+index bd2d0c9..89269e7 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
 @@ -12,12 +12,15 @@
@@ -1189,7 +1189,7 @@ index cafa71e..1632da9 100644
  #include "utils/log.h"
  #include "threads/SingleLock.h"
  
-@@ -620,6 +624,118 @@ HDR_STATUS CWinSystemAmlogic::GetOSHDRStatus()
+@@ -628,6 +632,118 @@ HDR_STATUS CWinSystemAmlogic::GetOSHDRStatus()
    return (IsHDRDisplay() ? HDR_STATUS::HDR_ON : HDR_STATUS::HDR_UNSUPPORTED);
  }
  
@@ -1309,7 +1309,7 @@ index cafa71e..1632da9 100644
  {
    std::unique_lock<CCriticalSection> lock(m_resourceSection);
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogic.h b/xbmc/windowing/amlogic/WinSystemAmlogic.h
-index 528888f..44f8355 100644
+index 8b1a7b3..48b1b6a 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogic.h
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogic.h
 @@ -18,7 +18,10 @@
@@ -1323,9 +1323,9 @@ index 528888f..44f8355 100644
  #include <gbm.h>
  
  class IDispResource;
-@@ -48,6 +51,30 @@ public:
-   virtual uint64_t ConfigureHdrGuiSession(uint64_t owner, int colorTransfer, bool dvGraphics) = 0;
+@@ -50,6 +53,30 @@ public:
    virtual void ReleaseHdrGuiSession(uint64_t owner) = 0;
+   virtual void SetHdrGuiSdrWhite(uint64_t owner, float sdrWhite, float sdrGamma) = 0;
  
 +  //! \brief The measured cost of the video pipeline, in milliseconds, or -1
 +  //! until it is known, which asks CGraphicContext for its buffer-count
@@ -1354,7 +1354,7 @@ index 528888f..44f8355 100644
    virtual void Register(IDispResource *resource);
    virtual void Unregister(IDispResource *resource);
  
-@@ -83,6 +110,10 @@ protected:
+@@ -85,6 +112,10 @@ protected:
    std::unique_ptr<CAMLGBMUtils> m_amlGBMUtils{nullptr};
    std::unique_ptr<KODI::UTILS::EGL::CEGLFence> m_eglFence{nullptr};
  private:

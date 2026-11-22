@@ -23,7 +23,7 @@ refresh rate change is queued.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/addons/resource.language.en_gb/resources/strings.po b/addons/resource.language.en_gb/resources/strings.po
-index dd054609a9..a8921713e3 100644
+index 060201f..4af9019 100644
 --- a/addons/resource.language.en_gb/resources/strings.po
 +++ b/addons/resource.language.en_gb/resources/strings.po
 @@ -9173,6 +9173,18 @@ msgctxt "#60025"
@@ -46,10 +46,10 @@ index dd054609a9..a8921713e3 100644
  #: xbmc/video/VideoDatabase.cpp
  msgctxt "#15011"
 diff --git a/system/settings/settings.xml b/system/settings/settings.xml
-index f4d61ceb3c..8a5a23dc8e 100755
+index 7898078..f1eb6e3 100755
 --- a/system/settings/settings.xml
 +++ b/system/settings/settings.xml
-@@ -4279,6 +4279,19 @@
+@@ -4309,6 +4309,19 @@
          </setting>
        </group>
        <group id="2" label="60025">
@@ -70,7 +70,7 @@ index f4d61ceb3c..8a5a23dc8e 100755
            <requirement>HAVE_AMCODEC</requirement>
            <level>2</level>
 diff --git a/xbmc/cores/VideoPlayer/Process/ProcessInfo.h b/xbmc/cores/VideoPlayer/Process/ProcessInfo.h
-index c93754c9a4..13981ba47f 100644
+index c93754c..13981ba 100644
 --- a/xbmc/cores/VideoPlayer/Process/ProcessInfo.h
 +++ b/xbmc/cores/VideoPlayer/Process/ProcessInfo.h
 @@ -150,6 +150,10 @@ public:
@@ -93,13 +93,14 @@ index c93754c9a4..13981ba47f 100644
    float m_newTempo;
    float m_speed;
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-index d297da5bc3..6f38a5121a 100644
+index 6bdd637..cabb689 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-@@ -1777,10 +1777,20 @@ void CVideoPlayer::Process()
+@@ -1790,11 +1790,21 @@ void CVideoPlayer::Process()
      // check display lost
      if (m_displayLost)
      {
+-      emptySince.reset();
 -      if (m_nextStream.Pending())
 -        m_nextStream.Begin(); // the outage is no stall
 -      CThread::Sleep(50ms);
@@ -113,6 +114,7 @@ index d297da5bc3..6f38a5121a 100644
 +      }
 +      if (!relocked)
 +      {
++        emptySince.reset();
 +        if (m_nextStream.Pending())
 +          m_nextStream.Begin(); // the outage is no stall
 +        CThread::Sleep(50ms);
@@ -121,7 +123,7 @@ index d297da5bc3..6f38a5121a 100644
      }
  
      // check if in an edit (cut or commercial break) that should be automatically skipped
-@@ -4763,8 +4773,40 @@ bool CVideoPlayer::PollResumePreroll()
+@@ -4946,8 +4956,40 @@ bool CVideoPlayer::PollResumePreroll()
    return false;
  }
  
@@ -162,7 +164,7 @@ index d297da5bc3..6f38a5121a 100644
    if ((state == CACHESTATE_PLAY || state == CACHESTATE_DONE) &&
        (m_caching == CACHESTATE_INIT || m_caching == CACHESTATE_FULL) &&
        HoldForSubtitleTranslation())
-@@ -7486,6 +7528,8 @@ void CVideoPlayer::UpdateVideoRender(bool video)
+@@ -7770,6 +7812,8 @@ void CVideoPlayer::UpdateVideoRender(bool video)
  void CVideoPlayer::OnLostDisplay()
  {
    CLog::Log(LOGINFO, "VideoPlayer: OnLostDisplay received");
@@ -171,7 +173,7 @@ index d297da5bc3..6f38a5121a 100644
    if (m_VideoPlayerAudio->IsInited())
      m_VideoPlayerAudio->SendMessage(std::make_shared<CDVDMsgBool>(CDVDMsg::GENERAL_PAUSE, true), 1);
    if (m_VideoPlayerVideo->IsInited())
-@@ -7502,6 +7546,21 @@ void CVideoPlayer::OnResetDisplay()
+@@ -7786,6 +7830,21 @@ void CVideoPlayer::OnResetDisplay()
      return;
  
    CLog::Log(LOGINFO, "VideoPlayer: OnResetDisplay received");
@@ -194,10 +196,10 @@ index d297da5bc3..6f38a5121a 100644
    m_VideoPlayerVideo->SendMessage(std::make_shared<CDVDMsgBool>(CDVDMsg::GENERAL_PAUSE, false), 1);
    m_clock.Pause(false);
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.h b/xbmc/cores/VideoPlayer/VideoPlayer.h
-index 149a7a5ca2..33a7678a8f 100644
+index ed50e91..aa248c0 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.h
-@@ -405,6 +405,9 @@ public:
+@@ -409,6 +409,9 @@ public:
    // IDispResource interface
    void OnLostDisplay() override;
    void OnResetDisplay() override;
@@ -207,7 +209,7 @@ index 149a7a5ca2..33a7678a8f 100644
  
    bool IsCaching() const override;
    int GetCacheLevel() const override;
-@@ -736,6 +739,11 @@ protected:
+@@ -751,6 +754,11 @@ protected:
    bool m_updateStreamDetails{false};
  
    std::atomic<bool> m_displayLost;
@@ -220,10 +222,10 @@ index 149a7a5ca2..33a7678a8f 100644
    double m_messageQueueTimeSize{0.0};
  };
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-index 2290a56ba7..490b52c7f5 100644
+index d1a39b5..f0342ee 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-@@ -1146,6 +1146,15 @@ void CRenderManager::UpdateResolution()
+@@ -1155,6 +1155,15 @@ void CRenderManager::UpdateResolution()
    }
  }
  
@@ -240,10 +242,10 @@ index 2290a56ba7..490b52c7f5 100644
  {
    if (width)
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
-index 4ea46d9588..9edcaf3067 100644
+index 63a0628..ef39ca5 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
-@@ -81,6 +81,8 @@ public:
+@@ -82,6 +82,8 @@ public:
    RESOLUTION GetResolution();
    void UpdateResolution();
    void TriggerUpdateResolution(float fps, int width, int height, std::string &stereomode);
@@ -252,7 +254,7 @@ index 4ea46d9588..9edcaf3067 100644
    void SetViewMode(int iViewMode);
    void PreInit();
    void UnInit();
-@@ -195,7 +197,7 @@ protected:
+@@ -201,7 +203,7 @@ protected:
    double m_videoPrerollLead{100000.0};
    double VideoPrerollLead() const;
    CCriticalSection m_datalock;
@@ -262,7 +264,7 @@ index 4ea46d9588..9edcaf3067 100644
    bool m_renderedDebugOverlay = false;
    bool m_renderDebug = false;
 diff --git a/xbmc/settings/Settings.h b/xbmc/settings/Settings.h
-index fc2bb58847..0f2b3ec713 100644
+index fc2bb58..0f2b3ec 100644
 --- a/xbmc/settings/Settings.h
 +++ b/xbmc/settings/Settings.h
 @@ -487,6 +487,7 @@ public:

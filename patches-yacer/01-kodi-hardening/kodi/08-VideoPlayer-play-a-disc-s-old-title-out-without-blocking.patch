@@ -113,10 +113,10 @@ index 0000000..f8729f0
 +  Clock::time_point m_progress;
 +};
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-index 1ce4c3b..cdbcbc8 100644
+index b791be6..9f3715c 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-@@ -1570,6 +1570,7 @@ void CVideoPlayer::Prepare()
+@@ -1583,6 +1583,7 @@ void CVideoPlayer::Prepare()
    m_processInfo->SetTempo(1.0);
    m_processInfo->SetFrameAdvance(false);
    m_State.Clear();
@@ -124,16 +124,16 @@ index 1ce4c3b..cdbcbc8 100644
    m_CurrentVideo.hint.Clear();
    m_CurrentAudio.hint.Clear();
    m_CurrentSubtitle.hint.Clear();
-@@ -1755,6 +1756,8 @@ void CVideoPlayer::Process()
-     // check display lost
+@@ -1769,6 +1770,8 @@ void CVideoPlayer::Process()
      if (m_displayLost)
      {
+       emptySince.reset();
 +      if (m_nextStream.Pending())
 +        m_nextStream.Begin(); // the outage is no stall
        CThread::Sleep(50ms);
        continue;
      }
-@@ -1768,6 +1771,38 @@ void CVideoPlayer::Process()
+@@ -1782,6 +1785,39 @@ void CVideoPlayer::Process()
      if (m_bAbortRequest)
        break;
  
@@ -166,13 +166,14 @@ index 1ce4c3b..cdbcbc8 100644
 +      m_CurrentAudio.Clear();
 +      m_CurrentVideo.Clear();
 +      m_CurrentSubtitle.Clear();
++      m_pSubtitleDemuxer.reset();
 +      continue;
 +    }
 +
      // should we open a new input stream?
      if (!m_pInputStream)
      {
-@@ -1922,13 +1957,7 @@ void CVideoPlayer::Process()
+@@ -1994,14 +2030,7 @@ void CVideoPlayer::Process()
  
          SetCaching(CACHESTATE_DONE);
          CLog::Log(LOGINFO, "VideoPlayer: next stream, wait for old streams to be finished");
@@ -183,11 +184,12 @@ index 1ce4c3b..cdbcbc8 100644
 -        m_CurrentAudio.Clear();
 -        m_CurrentVideo.Clear();
 -        m_CurrentSubtitle.Clear();
+-        m_pSubtitleDemuxer.reset();
 +        m_nextStream.Begin();
          continue;
        }
  
-@@ -3391,8 +3420,8 @@ void CVideoPlayer::HandleMessages()
+@@ -3567,8 +3596,8 @@ void CVideoPlayer::HandleMessages()
          m_processInfo->SeekFinished(0);
        }
  
@@ -198,7 +200,7 @@ index 1ce4c3b..cdbcbc8 100644
          m_dvd.state = DVDSTATE_SEEK;
  
        m_processInfo->SetStateSeeking(false);
-@@ -5865,6 +5894,10 @@ int ToVisibleChapter(const std::vector<int>& rawChapters, int rawChapter)
+@@ -6182,6 +6211,10 @@ int ToVisibleChapter(const std::vector<int>& rawChapters, int rawChapter)
  
  void CVideoPlayer::UpdatePlayState(double timeout)
  {
@@ -210,7 +212,7 @@ index 1ce4c3b..cdbcbc8 100644
        m_State.timestamp + DVD_MSEC_TO_TIME(timeout) > m_clock.GetAbsoluteClock())
      return;
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.h b/xbmc/cores/VideoPlayer/VideoPlayer.h
-index 3328e68..f882093 100644
+index 8c10f17..28b6c43 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.h
 @@ -13,6 +13,7 @@
@@ -221,7 +223,7 @@ index 3328e68..f882093 100644
  #include "VideoPlayerAudioID3.h"
  #include "VideoPlayerRadioRDS.h"
  #include "VideoPlayerSubtitle.h"
-@@ -664,6 +665,7 @@ protected:
+@@ -687,6 +688,7 @@ protected:
    XbmcThreads::EndTime<> m_syncTimer;
  
    std::optional<std::chrono::steady_clock::time_point> m_syncStartPtsWait;

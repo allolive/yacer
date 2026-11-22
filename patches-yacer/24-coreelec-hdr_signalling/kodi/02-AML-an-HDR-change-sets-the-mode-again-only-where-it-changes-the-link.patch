@@ -29,11 +29,11 @@ judged from it whether the window was kept or made again.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/utils/AMLUtils.cpp b/xbmc/utils/AMLUtils.cpp
-index 07003fc375..393f7abc86 100644
+index 887ea3c..03d7b50 100644
 --- a/xbmc/utils/AMLUtils.cpp
 +++ b/xbmc/utils/AMLUtils.cpp
-@@ -333,6 +333,20 @@ bool aml_convert_to_dv_by_vs_engine(StreamHdrType hdrType)
-   return ((convert_to_dv && !!user_convert_to_dv && !!dv_user_enabled) == 1);
+@@ -415,6 +415,20 @@ AMLVideoOutput aml_video_output(const CDVDStreamInfo& source)
+   return output;
  }
  
 +// Only the Dolby Vision engine and a forced conversion tie the HDMI colour
@@ -54,22 +54,22 @@ index 07003fc375..393f7abc86 100644
  {
    CSysfsPath videostarted{"/sys/class/tsync/videostarted"};
 diff --git a/xbmc/utils/AMLUtils.h b/xbmc/utils/AMLUtils.h
-index 755201720e..fcea3e78a6 100644
+index 08b206d..374d123 100644
 --- a/xbmc/utils/AMLUtils.h
 +++ b/xbmc/utils/AMLUtils.h
-@@ -67,6 +67,7 @@ bool aml_convert_to_hdr(StreamHdrType hdrType);
- bool aml_convert_to_sdr_by_vs_engine(StreamHdrType hdrType);
- bool aml_convert_to_hdr_by_vs_engine(StreamHdrType hdrType);
- bool aml_convert_to_dv_by_vs_engine(StreamHdrType hdrType);
+@@ -88,6 +88,7 @@ struct AMLVideoOutput
+   float sdrGamma{0.0f};
+ };
+ AMLVideoOutput aml_video_output(const CDVDStreamInfo& source);
 +bool aml_hdr_change_needs_mode_set(StreamHdrType from, StreamHdrType to);
  bool aml_video_started();
  int aml_amdv_wait(StreamHdrType hdrType);
  void aml_set_3d_video_mode(unsigned int mode, bool framepacking_support, int view_mode);
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
-index 23771eab17..1efd3332ea 100644
+index 4b65208..1c528d4 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
-@@ -123,7 +123,7 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -125,7 +125,7 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
    bool nativeGUI = CServiceBroker::GetSettingsComponent()->GetSettings()->GetBool(CSettings::SETTING_COREELEC_AMLOGIC_DISABLEGUISCALING);
  
    StreamHdrType hdrType = CServiceBroker::GetWinSystem()->GetGfxContext().GetHDRType();
@@ -78,7 +78,7 @@ index 23771eab17..1efd3332ea 100644
    // Without HDMI 3D, a stereo mode changes the output only by entering or
    // leaving HFR VRR.
    bool force_mode_switch_by_stereo_mode =
-@@ -146,6 +146,8 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -148,6 +148,8 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
  
    const std::string new_hdrStr = CStreamDetails::HdrTypeToString(hdrType);
    const std::string old_hdrStr = CStreamDetails::HdrTypeToString(m_hdrType);
@@ -87,7 +87,7 @@ index 23771eab17..1efd3332ea 100644
    CLog::Log(LOGDEBUG,
              "CWinSystemAmlogicGLESContext::{}: "
              "m_bWindowCreated: {}, "
-@@ -235,7 +237,6 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -237,7 +239,6 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
      CLog::Log(LOGDEBUG, "CWinSystemAmlogicGLESContext::{}: force mode switch", __FUNCTION__);
  
    // refresh backup data

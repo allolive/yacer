@@ -64,13 +64,6 @@ const AVPacketSideData* av_packet_side_data_get(const AVPacketSideData* data, in
 }
 bool dvEnabled = true;
 bool aml_dolby_vision_enabled() { return dvEnabled; }
-// CoreELEC's VS10 / tone-mapping conversions (kodi 326cbc50 rewrites a stream's
-// colour fields for them in AddStream); all off here.
-bool aml_convert_to_dv_by_vs_engine(StreamHdrType) { return false; }
-bool aml_convert_to_hdr_by_vs_engine(StreamHdrType) { return false; }
-bool aml_convert_to_sdr_by_vs_engine(StreamHdrType) { return false; }
-bool aml_convert_to_hdr(StreamHdrType) { return false; }
-bool aml_convert_to_sdr(StreamHdrType) { return false; }
 struct CLog
 {
   template<typename... Args> static void Log(int, const char*, Args&&...) {}

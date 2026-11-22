@@ -27,10 +27,10 @@ line to make it.
 
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.h b/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.h
-index 7786275..195b5e3 100644
+index ab2af54..ad20139 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.h
-@@ -79,6 +79,12 @@ public:
+@@ -81,6 +81,12 @@ public:
    //! SurfaceView, the Amlogic video layer. Such a renderer must produce its
    //! own capture frame; every other renderer is served by reading the framebuffer.
    virtual bool VideoBypassesFramebuffer() { return !IsGuiLayer(); }
@@ -44,7 +44,7 @@ index 7786275..195b5e3 100644
    //! Overridden by renderers whose VideoBypassesFramebuffer() is true.
    //! Default: capture unavailable.
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
-index c8a5952..50ad8d7 100644
+index 1404fde..4c97b39 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
 @@ -31,11 +31,18 @@ CRendererAML::CRendererAML()
@@ -67,7 +67,7 @@ index c8a5952..50ad8d7 100644
  {
    if (buffer && dynamic_cast<CAMLVideoBuffer*>(buffer))
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h
-index 0935839..166b0c0 100644
+index 7ff07ff..8f45e6b 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h
 @@ -46,6 +46,7 @@ public:
@@ -79,10 +79,10 @@ index 0935839..166b0c0 100644
    // Feature support
    virtual bool Supports(ESCALINGMETHOD method) const override { return false; };
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-index e1a1540..abd3020 100644
+index 5f7f0cc..38556cc 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-@@ -1546,6 +1546,7 @@ void CRenderManager::CheckEnableClockSync()
+@@ -1567,6 +1567,7 @@ void CRenderManager::CheckEnableClockSync()
  {
    // refresh rate can be a multiple of video fps
    double diff = 1.0;
@@ -90,7 +90,7 @@ index e1a1540..abd3020 100644
  
    if (m_fps != 0)
    {
-@@ -1558,6 +1559,7 @@ void CRenderManager::CheckEnableClockSync()
+@@ -1579,6 +1580,7 @@ void CRenderManager::CheckEnableClockSync()
      }
  
      diff = static_cast<double>(CServiceBroker::GetWinSystem()->GetGfxContext().GetFPS()) / fps;
@@ -98,7 +98,7 @@ index e1a1540..abd3020 100644
      if (diff < 1.0)
        diff = 1.0 / diff;
  
-@@ -1565,7 +1567,10 @@ void CRenderManager::CheckEnableClockSync()
+@@ -1586,7 +1588,10 @@ void CRenderManager::CheckEnableClockSync()
      diff = std::abs(std::round(diff) - diff);
    }
  
@@ -111,10 +111,10 @@ index e1a1540..abd3020 100644
      m_clockSync.m_enabled = true;
    }
 diff --git a/xbmc/utils/AMLUtils.cpp b/xbmc/utils/AMLUtils.cpp
-index 7ed97de..2932f9a 100644
+index d41de3e..4535b48 100644
 --- a/xbmc/utils/AMLUtils.cpp
 +++ b/xbmc/utils/AMLUtils.cpp
-@@ -10,9 +10,20 @@
+@@ -10,10 +10,21 @@
  #include <regex>
  #include <string.h>
  #include <sys/ioctl.h>
@@ -122,6 +122,7 @@ index 7ed97de..2932f9a 100644
  #include <unistd.h>
  
  #include "AMLUtils.h"
+ #include "cores/VideoPlayer/DVDStreamInfo.h"
 +
 +#include <cstdint>
 +
@@ -135,7 +136,7 @@ index 7ed97de..2932f9a 100644
  #include "utils/log.h"
  #include "utils/StringUtils.h"
  #include "ServiceBroker.h"
-@@ -21,9 +32,11 @@
+@@ -22,9 +33,11 @@
  #include "settings/SettingsComponent.h"
  #include "platform/linux/SysfsPath.h"
  #include "windowing/amlogic/WinSystemAmlogic.h"
@@ -147,7 +148,7 @@ index 7ed97de..2932f9a 100644
  
  int aml_get_cpufamily_id()
  {
-@@ -348,3 +361,130 @@ void aml_set_3d_video_mode(unsigned int mode, bool framepacking_support, int vie
+@@ -430,3 +443,130 @@ void aml_set_3d_video_mode(unsigned int mode, bool framepacking_support, int vie
      CSysfsPath("/sys/module/amvdec_h264mvc/parameters/view_mode", view_mode);
    }
  }
@@ -279,20 +280,20 @@ index 7ed97de..2932f9a 100644
 +  return g_amlRefreshesPerFrame.load(std::memory_order_relaxed);
 +}
 diff --git a/xbmc/utils/AMLUtils.h b/xbmc/utils/AMLUtils.h
-index 859e42e..4b32b87 100644
+index 7bb4aae..ecfbde9 100644
 --- a/xbmc/utils/AMLUtils.h
 +++ b/xbmc/utils/AMLUtils.h
-@@ -8,6 +8,9 @@
+@@ -10,6 +10,9 @@
  
  #include "utils/StreamDetails.h"
  
 +#include <cmath>
 +#include <optional>
 +
- enum AML_SUPPORT_H264_4K2K
+ extern "C"
  {
-   AML_SUPPORT_H264_4K2K_UNINIT = -1,
-@@ -67,3 +70,46 @@ bool aml_convert_to_dv_by_vs_engine(StreamHdrType hdrType);
+ #include <libavutil/pixfmt.h>
+@@ -88,3 +91,46 @@ AMLVideoOutput aml_video_output(const CDVDStreamInfo& source);
  bool aml_video_started();
  int aml_amdv_wait(StreamHdrType hdrType);
  void aml_set_3d_video_mode(unsigned int mode, bool framepacking_support, int view_mode);

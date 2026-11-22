@@ -51,7 +51,7 @@ index 1237f29..d4b6247 100644
  }
  
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-index f7cd846..4338cb5 100644
+index 2b25caf..373103c 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 @@ -2774,7 +2774,11 @@ void CAMLCodec::CloseDecoder()
@@ -119,7 +119,7 @@ index f7cd846..4338cb5 100644
    if (drop)
      vbuf.flags |= V4L2_BUF_FLAG_DONE;
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
-index ba6b37d..16afe2c 100644
+index 2b13652..586f014 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 @@ -87,7 +87,8 @@ public:
@@ -142,7 +142,7 @@ index ba6b37d..16afe2c 100644
    CRect            m_dst_rect;
    CRect            m_display_rect;
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index 7a73f31..ac40659 100644
+index c3a603c..365819b 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 @@ -61,7 +61,8 @@ void CAMLVideoBufferPool::Return(int id)
@@ -155,40 +155,41 @@ index 7a73f31..ac40659 100644
      m_videoBuffers[id]->m_amlCodec = nullptr;
    }
    m_freeBuffers.push_back(id);
-@@ -695,7 +696,7 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
+@@ -736,7 +737,7 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
      pVideoPicture->videoBuffer = m_videoBufferPool->Get();
      static_cast<CAMLVideoBuffer*>(pVideoPicture->videoBuffer)->Set(this, m_Codec,
       m_Codec->GetOMXPts(), m_Codec->GetAmlDuration(), m_Codec->GetBufferIndex(), m_metadataToken,
--     m_frameMeta);;
-+     m_frameMeta, m_Codec->GetFrameGeneration());
+-     m_frameMeta, m_sdrWhite, m_sdrGamma);;
++     m_frameMeta, m_sdrWhite, m_sdrGamma, m_Codec->GetFrameGeneration());
    }
  
    // check for mpeg2 aspect ratio changes
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-index fc4750d..796935b 100644
+index a1685a8..356fa90 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-@@ -31,7 +31,7 @@ class CAMLVideoBuffer : public CVideoBuffer
+@@ -34,7 +34,8 @@ class CAMLVideoBuffer : public CVideoBuffer
  public:
    CAMLVideoBuffer(int id) : CVideoBuffer(id) {};
    void Set(CDVDVideoCodecAmlogic *codec, std::shared_ptr<CAMLCodec> amlcodec, uint64_t omxPts, int amlDuration, uint32_t bufferIndex,
--           uint32_t metadataToken, AMLFrameMetadataPtr metadata)
-+           uint32_t metadataToken, AMLFrameMetadataPtr metadata, uint64_t frameGeneration)
+-           uint32_t metadataToken, AMLFrameMetadataPtr metadata, float sdrWhite, float sdrGamma)
++           uint32_t metadataToken, AMLFrameMetadataPtr metadata, float sdrWhite, float sdrGamma,
++           uint64_t frameGeneration)
    {
      m_codec = codec;
      m_amlCodec = amlcodec;
-@@ -40,6 +40,7 @@ public:
-     m_bufferIndex = bufferIndex;
-     m_metadataToken = metadataToken;
+@@ -45,6 +46,7 @@ public:
      m_metadata = std::move(metadata);
+     m_sdrWhite = sdrWhite;
+     m_sdrGamma = sdrGamma;
 +    m_frameGeneration = frameGeneration;
    }
  
    CDVDVideoCodecAmlogic* m_codec;
-@@ -49,6 +50,7 @@ public:
-   uint32_t m_bufferIndex;
-   uint32_t m_metadataToken{0};
+@@ -56,6 +58,7 @@ public:
    AMLFrameMetadataPtr m_metadata;
+   float m_sdrWhite{0.0f};
+   float m_sdrGamma{0.0f};
 +  uint64_t m_frameGeneration{0};
  };
  
@@ -224,7 +225,7 @@ index 572fa9c..a5b71bb 100644
      double syncerror = m_audioSink.GetSyncError();
  
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
-index ec0824b..a84ee4c 100644
+index 9ec9c49..47835aa 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
 @@ -161,6 +161,7 @@ void CRendererAML::AddVideoPicture(const VideoPicture &picture, int index)
@@ -232,10 +233,10 @@ index ec0824b..a84ee4c 100644
  
    BUFFER &buf(m_buffers[index]);
 +  buf.prerollGeneration = 0;
-   if (picture.videoBuffer)
-   {
-     buf.videoBuffer = picture.videoBuffer;
-@@ -178,7 +179,7 @@ void CRendererAML::ReleaseBuffer(int idx)
+   // on change only: a decoder can be replaced without a reconfigure
+   CAMLVideoBuffer *amli(dynamic_cast<CAMLVideoBuffer*>(picture.videoBuffer));
+   if (amli && (amli->m_sdrWhite != m_sdrWhite || amli->m_sdrGamma != m_sdrGamma))
+@@ -188,7 +189,7 @@ void CRendererAML::ReleaseBuffer(int idx)
      {
        if (amli->m_amlCodec)
        {
@@ -244,7 +245,7 @@ index ec0824b..a84ee4c 100644
          amli->m_amlCodec = nullptr; // Released
        }
        amli->Release();
-@@ -245,22 +246,94 @@ bool CRendererAML::Flush(bool saveBuffers)
+@@ -255,22 +256,94 @@ bool CRendererAML::Flush(bool saveBuffers)
    return saveBuffers;
  };
  
@@ -348,7 +349,7 @@ index ec0824b..a84ee4c 100644
        {
          m_releasedToken = amli->m_metadataToken;
          m_releasedMeta = amli->m_metadata;
-@@ -297,7 +370,8 @@ void CRendererAML::RenderUpdate(int index, int index2, bool clear, unsigned int
+@@ -307,7 +380,8 @@ void CRendererAML::RenderUpdate(int index, int index2, bool clear, unsigned int
    }
  
    ObserveRefresh();
@@ -358,7 +359,7 @@ index ec0824b..a84ee4c 100644
    PublishReleasedFrame();
    CAMLCodec::PollFrame();
  }
-@@ -381,9 +455,10 @@ void CRendererAML::WakeVsyncPresent()
+@@ -391,9 +465,10 @@ void CRendererAML::WakeVsyncPresent()
  
  bool CRendererAML::PresentFrame(int index)
  {
@@ -372,7 +373,7 @@ index ec0824b..a84ee4c 100644
      return false;
  
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h
-index 7034907..69b8aa3 100644
+index 54b7aec..8e91fb1 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.h
 @@ -38,6 +38,12 @@ public:
@@ -405,7 +406,7 @@ index 7034907..69b8aa3 100644
      int duration;
    } m_buffers[m_numRenderBuffers];
  
-@@ -81,4 +88,10 @@ private:
+@@ -83,4 +90,10 @@ private:
    //! Frame last released to amvideo, whose metadata goes out when the frame is shown
    uint32_t m_releasedToken{0};
    std::shared_ptr<const AMLFrameMetadata> m_releasedMeta;
@@ -417,7 +418,7 @@ index 7034907..69b8aa3 100644
 +  bool m_prerollSubmitted{false};
  };
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-index abd3020..2290a56 100644
+index 38556cc..d1a39b5 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 @@ -122,7 +122,7 @@ bool CRenderManager::BeginVideoPreroll(uint64_t generation, double target)
@@ -444,10 +445,10 @@ index abd3020..2290a56 100644
  {
    std::unique_lock lock(m_presentlock);
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
-index 446d4da..4ea46d9 100644
+index 3f76717..63a0628 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
-@@ -113,7 +113,7 @@ public:
+@@ -114,7 +114,7 @@ public:
    bool Supports(ESCALINGMETHOD method) const;
  
    int GetSkippedFrames()  { return m_QueueSkip; }

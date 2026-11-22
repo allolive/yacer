@@ -67,10 +67,10 @@ is never reported stacked without a stacked surface.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/application/Application.cpp b/xbmc/application/Application.cpp
-index ab088ac..8de45cd 100644
+index 9c9a5c0..9df079e 100644
 --- a/xbmc/application/Application.cpp
 +++ b/xbmc/application/Application.cpp
-@@ -916,8 +916,12 @@ void CApplication::Render()
+@@ -927,8 +927,12 @@ void CApplication::Render()
    if (guiWillRender)
    {
      const RenderStereoMode stereoMode = CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode();
@@ -86,10 +86,10 @@ index ab088ac..8de45cd 100644
        CServiceBroker::GetWinSystem()->GetGfxContext().SetStereoView(RenderStereoView::LEFT);
        hasRendered |= CServiceBroker::GetGUI()->GetWindowManager().Render();
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-index d7790ca..68221d8 100644
+index d95898b..88c37aa 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-@@ -2888,6 +2888,7 @@ void CAMLCodec::CloseDecoder()
+@@ -2907,6 +2907,7 @@ void CAMLCodec::CloseDecoder()
        CSysfsPath(CAMLDisplay::FS3D_SWAP, 0);
        m_fs3dMode = FS3D_UNSET;
      }
@@ -97,7 +97,7 @@ index d7790ca..68221d8 100644
    }
  
    // never leave vcodec ff/rw or paused.
-@@ -4124,11 +4125,14 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -4156,11 +4157,14 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
      else if (hfr && (layout == "top_bottom" || layout == "bottom_top"))
        mode = MODE_3D_ENABLE | MODE_FORCE_3D_FA_TB | MODE_3D_OUT_FA_L_FIRST;
  
@@ -116,7 +116,7 @@ index d7790ca..68221d8 100644
        dst_rect.x1 *= xs;
        dst_rect.x2 *= xs;
        dst_rect.y1 *= ys;
-@@ -4154,6 +4158,9 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -4186,6 +4190,9 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
        m_fs3dMode = mode;
        m_fs3dSwap = swap;
      }
@@ -127,7 +127,7 @@ index d7790ca..68221d8 100644
  
  #if 1
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererGLES.cpp
-index 47535fd..29cf3ef 100644
+index dc992b8..5ddb825 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererGLES.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererGLES.cpp
 @@ -357,11 +357,11 @@ COverlayTextureGLES::COverlayTextureGLES(const CDVDOverlayImage& o, CRect& rSour
@@ -146,10 +146,10 @@ index 47535fd..29cf3ef 100644
        const std::string layout = CServiceBroker::GetDataCacheCore().GetVideoStereoMode();
        if (layout == "left_right" || layout == "right_left")
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-index 8d355c3..be618c5 100644
+index ea641fb..c10ef01 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-@@ -683,9 +683,9 @@ int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
+@@ -765,9 +765,9 @@ int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
  
    if (stereo_mode == RenderStereoMode::MONO ||
        stereo_mode == RenderStereoMode::OFF ||
@@ -161,7 +161,7 @@ index 8d355c3..be618c5 100644
      return 0;
    }
  
-@@ -693,7 +693,8 @@ int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
+@@ -775,7 +775,8 @@ int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
    int depth = CServiceBroker::GetSettingsComponent()->GetSettings()->GetInt(CSettings::SETTING_SUBTITLES_STEREOSCOPICDEPTH);
  
    // in case of MVC playback and PGS subtitles, use the subtitle depth info additionally to the configured one
@@ -172,10 +172,10 @@ index 8d355c3..be618c5 100644
      depth += subtitleDepth;
    }
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-index 397bf57..549f9ce 100644
+index 7d7170a..c9fa695 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-@@ -927,7 +927,22 @@ void CRenderManager::Render(bool clear, DWORD flags, DWORD alpha, bool gui)
+@@ -937,7 +937,22 @@ void CRenderManager::Render(bool clear, DWORD flags, DWORD alpha, bool gui)
      CRect src, dst, view;
      m_pRenderer->GetVideoRect(src, dst, view);
      m_overlays.SetVideoRect(src, dst, view);
@@ -198,7 +198,7 @@ index 397bf57..549f9ce 100644
 +      m_overlays.RenderHDROverlays(GuiSource());
    }
  
-   if (gui || m_renderDebug)
+   if (gui)
 diff --git a/xbmc/rendering/RenderSystemTypes.h b/xbmc/rendering/RenderSystemTypes.h
 index d2d0f40..e239640 100644
 --- a/xbmc/rendering/RenderSystemTypes.h
@@ -213,7 +213,7 @@ index d2d0f40..e239640 100644
    COUNT,
  
 diff --git a/xbmc/windowing/GraphicContext.cpp b/xbmc/windowing/GraphicContext.cpp
-index d06301d..f103485 100644
+index 85bc138..004d9ba 100644
 --- a/xbmc/windowing/GraphicContext.cpp
 +++ b/xbmc/windowing/GraphicContext.cpp
 @@ -27,6 +27,7 @@
@@ -242,7 +242,7 @@ index d06301d..f103485 100644
    if(m_stereoMode == RenderStereoMode::SPLIT_VERTICAL)
    {
      const RESOLUTION_INFO info = GetResInfo();
-@@ -470,6 +482,8 @@ void CGraphicContext::SetVideoResolutionInternal(RESOLUTION res, bool forceUpdat
+@@ -475,6 +487,8 @@ void CGraphicContext::SetVideoResolutionInternal(RESOLUTION res, bool forceUpdat
  
    if (switched)
    {
@@ -251,7 +251,7 @@ index d06301d..f103485 100644
      m_scissors.SetRect(0, 0, (float)m_iScreenWidth, (float)m_iScreenHeight);
  
      // make sure all stereo stuff are correctly setup
-@@ -659,6 +673,27 @@ const RESOLUTION_INFO CGraphicContext::GetResInfo(RESOLUTION res) const
+@@ -664,6 +678,27 @@ const RESOLUTION_INFO CGraphicContext::GetResInfo(RESOLUTION res) const
      info.fRefreshRate = m_fFPSOverride;
    }
  
@@ -280,10 +280,10 @@ index d06301d..f103485 100644
  }
  
 diff --git a/xbmc/windowing/WinSystem.h b/xbmc/windowing/WinSystem.h
-index ea87c6f..76dc12d 100644
+index f9e88c4..f57ec90 100644
 --- a/xbmc/windowing/WinSystem.h
 +++ b/xbmc/windowing/WinSystem.h
-@@ -135,6 +135,20 @@ public:
+@@ -154,6 +154,20 @@ public:
     */
    virtual float GetVsyncRate();
  
@@ -476,10 +476,10 @@ index da72a21..4783a4c 100644
    //! the record of a 3D left behind is kept until its desktop has been set
    std::atomic<bool> m_fs3d_state_pending{false};
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
-index 7f986c9..fca8389 100644
+index 509331b..384beac 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
-@@ -842,6 +842,13 @@ float CWinSystemAmlogic::GetVsyncRate()
+@@ -851,6 +851,13 @@ float CWinSystemAmlogic::GetVsyncRate()
    return fs3d > 0.0 ? static_cast<float>(fs3d) : aml_resolution_rate();
  }
  
@@ -494,10 +494,10 @@ index 7f986c9..fca8389 100644
  {
    m_renderThread.store(std::this_thread::get_id(), std::memory_order_relaxed);
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogic.h b/xbmc/windowing/amlogic/WinSystemAmlogic.h
-index 4ab3d75..f0a0fc9 100644
+index 08bcb51..f8ee3d7 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogic.h
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogic.h
-@@ -81,6 +81,13 @@ public:
+@@ -83,6 +83,13 @@ public:
    //! rate, while Kodi's resolution keeps the film's); else the resolution's.
    float GetVsyncRate() override;
  
@@ -511,7 +511,7 @@ index 4ab3d75..f0a0fc9 100644
    //! \brief Name the thread that schedules frames. Until this is called the
    //! cached value is served to everyone, which is the base-class behaviour.
    void RegisterRenderThread();
-@@ -128,7 +135,11 @@ protected:
+@@ -130,7 +137,11 @@ protected:
    static std::unique_ptr<CAMLDisplay> m_amlDisplay;
    std::unique_ptr<CAMLGBMUtils> m_amlGBMUtils{nullptr};
    std::unique_ptr<KODI::UTILS::EGL::CEGLFence> m_eglFence{nullptr};
@@ -524,10 +524,10 @@ index 4ab3d75..f0a0fc9 100644
    //! the stereo mode MessagePump last saw
    RenderStereoMode m_fs3dStereoMode{RenderStereoMode::OFF};
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
-index 27a726c..603e7df 100644
+index 57efdc7..1920c9d 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
-@@ -186,6 +186,14 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -188,6 +188,14 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
        !force_mode_switch_by_stereo_mode && !force_mode_switch_by_fs3d_rate)
    {
      CLog::Log(LOGDEBUG, "CWinSystemAmlogicGLESContext::{}: No need to create a new window", __FUNCTION__);
@@ -542,7 +542,7 @@ index 27a726c..603e7df 100644
      return true;
    }
  
-@@ -221,11 +229,34 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -223,6 +231,11 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
    m_bFullScreen = fullScreen;
    m_nativeGUI = nativeGUI;
  
@@ -553,6 +553,8 @@ index 27a726c..603e7df 100644
 +
    if (!CWinSystemAmlogic::CreateNewWindow(name, fullScreen, res))
    {
+     if (!m_modeSwitchFallback)
+@@ -237,6 +250,24 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
      return false;
    }
  
@@ -577,7 +579,7 @@ index 27a726c..603e7df 100644
    uint32_t format = m_pGLContext->GetConfigAttrib(EGL_NATIVE_VISUAL_ID);
    if (!m_amlGBMUtils->CreateSurface(res.iWidth, res.iHeight, format))
    {
-@@ -335,6 +366,12 @@ void CWinSystemAmlogicGLESContext::PresentRender(bool rendered, bool videoLayer)
+@@ -350,6 +381,12 @@ void CWinSystemAmlogicGLESContext::PresentRender(bool rendered, bool videoLayer)
      {
        // this flip latches no earlier than the vsync after the last step: pace on the next one
        m_presentStepSeen = CAMLCodec::PresentSteps();
@@ -590,7 +592,7 @@ index 27a726c..603e7df 100644
        m_amlDisplay->FlipPage(m_amlGBMUtils->GetFBId());
      }
    }
-@@ -607,9 +644,12 @@ void CWinSystemAmlogicGLESContext::EndGuiComposite()
+@@ -644,9 +681,12 @@ void CWinSystemAmlogicGLESContext::EndGuiComposite()
    // video renders in the RenderEx pass with clear=false, so DrawBlackBars is
    // never called. Without this clear, letterbox areas retain stale content
    // from the swap chain when the display resolution doesn't change between
@@ -604,7 +606,7 @@ index 27a726c..603e7df 100644
  }
  
  // CompositeGui is the last GL operation in the frame (called just before EndRender).
-@@ -635,6 +675,12 @@ void CWinSystemAmlogicGLESContext::CompositeGui()
+@@ -672,6 +712,12 @@ void CWinSystemAmlogicGLESContext::CompositeGui()
      return;
    }
  
@@ -617,7 +619,7 @@ index 27a726c..603e7df 100644
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, m_guiFbo.Texture());
  
-@@ -671,6 +717,9 @@ void CWinSystemAmlogicGLESContext::CompositeGui()
+@@ -708,6 +754,9 @@ void CWinSystemAmlogicGLESContext::CompositeGui()
    glDisableVertexAttribArray(texLoc);
  
    m_compositeShader->Disable();
@@ -628,13 +630,13 @@ index 27a726c..603e7df 100644
  
  EGLDisplay CWinSystemAmlogicGLESContext::GetEGLDisplay() const
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.h b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.h
-index d9ef60c..3272dbb 100644
+index 9f8899c..6f435e3 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.h
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.h
-@@ -74,6 +74,9 @@ private:
-   std::unique_ptr<CEGLContextUtils> m_pGLContext;
+@@ -77,6 +77,9 @@ private:
    StreamHdrType m_hdrType = StreamHdrType::HDR_TYPE_NONE;
    uint64_t m_presentStepSeen{0};
+   bool m_modeSwitchFallback{false};
 +  //! osd_fa_3d for the surface the next flip shows, and the value last written
 +  int m_fs3dOsdWanted{0};
 +  int m_fs3dOsdSet{-1};

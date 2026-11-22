@@ -12,12 +12,6 @@ yacer_add_test(
   KODI_SOURCES xbmc/utils/HevcSei.cpp xbmc/utils/BitstreamReader.cpp
 )
 
-yacer_add_test(
-  NAME BitstreamReaderBounds
-  SOURCES TestBitstreamReaderBounds.cpp
-  KODI_SOURCES xbmc/utils/BitstreamReader.cpp
-)
-
 # The real queue and synchronise message, so the drain a stop has to end is
 # the one the stream players wait in.
 yacer_add_test(

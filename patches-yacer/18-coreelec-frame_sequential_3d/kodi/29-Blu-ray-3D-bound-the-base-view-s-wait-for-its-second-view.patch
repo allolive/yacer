@@ -78,10 +78,10 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  9 files changed, 243 insertions(+), 19 deletions(-)
 
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
-index 26d8bf5..6d6bb34 100644
+index 9f3d1ef..8c5d20d 100644
 --- a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
-@@ -1177,7 +1177,9 @@ double CDVDDemuxFFmpeg::ConvertTimestamp(int64_t pts, int den, int num)
+@@ -1179,7 +1179,9 @@ double CDVDDemuxFFmpeg::ConvertTimestamp(int64_t pts, int den, int num)
  #ifdef HAVE_LIBBLURAY
  // Puts a packet on title time from the clip it was read in. This replaces the start term of
  // ConvertTimestamp, which steps back at every seamless clip join.
@@ -92,7 +92,7 @@ index 26d8bf5..6d6bb34 100644
  {
    constexpr AVRational CLIP_TIME_BASE = {1, 90000};
    const auto bluray = static_cast<CDVDInputStreamBluray*>(m_pInput.get());
-@@ -1188,6 +1190,9 @@ void CDVDDemuxFFmpeg::ConvertBlurayTimestamps(DemuxPacket* packet, const AVStrea
+@@ -1190,6 +1192,9 @@ void CDVDDemuxFFmpeg::ConvertBlurayTimestamps(DemuxPacket* packet, const AVStrea
    if (m_pkt.pkt.pos >= 0)
      readPos->second = m_blurayReadBase + m_pkt.pkt.pos;
  
@@ -102,15 +102,15 @@ index 26d8bf5..6d6bb34 100644
    const auto clip = bluray->GetClipTime(readPos->second);
    if (!clip)
      return;
-@@ -1228,6 +1233,7 @@ DemuxPacket* CDVDDemuxFFmpeg::ReadInternal(bool keep)
-   // would consider this the end of stream and stop.
-   bool bReturnEmpty = false;
+@@ -1232,6 +1237,7 @@ DemuxPacket* CDVDDemuxFFmpeg::ReadInternal(bool keep)
+   // only a timed out read returns an empty packet without dropping input
+   bool timedOut = false;
    int64_t dualLayerKey = AV_NOPTS_VALUE;
 +  int playItem = -1;
    {
      std::unique_lock lock(m_critSection); // open lock scope
      if (m_pFormatContext)
-@@ -1361,7 +1367,7 @@ DemuxPacket* CDVDDemuxFFmpeg::ReadInternal(bool keep)
+@@ -1366,7 +1372,7 @@ DemuxPacket* CDVDDemuxFFmpeg::ReadInternal(bool keep)
            dualLayerKey = m_pkt.pkt.pts != AV_NOPTS_VALUE ? m_pkt.pkt.pts : m_pkt.pkt.dts;
  #ifdef HAVE_LIBBLURAY
            if (m_pInput->IsStreamType(DVDSTREAM_TYPE_BLURAY))
@@ -119,7 +119,7 @@ index 26d8bf5..6d6bb34 100644
  #endif
            pPacket->duration = DVD_SEC_TO_TIME((double)m_pkt.pkt.duration * stream->time_base.num /
                                                stream->time_base.den);
-@@ -1454,7 +1460,7 @@ DemuxPacket* CDVDDemuxFFmpeg::ReadInternal(bool keep)
+@@ -1462,7 +1468,7 @@ DemuxPacket* CDVDDemuxFFmpeg::ReadInternal(bool keep)
      }
      if (stream && m_pSSIF)
      {
@@ -129,10 +129,10 @@ index 26d8bf5..6d6bb34 100644
          stream = GetStream(pPacket->iStreamId);
      }
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.h b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.h
-index 614a98d..3a4da91 100644
+index 135db4d..6d99d79 100644
 --- a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.h
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.h
-@@ -143,7 +143,8 @@ protected:
+@@ -144,7 +144,8 @@ protected:
    AVDictionary* GetFFMpegOptionsFromInput();
    double ConvertTimestamp(int64_t pts, int den, int num);
  #ifdef HAVE_LIBBLURAY
@@ -515,10 +515,10 @@ index 9bcfbf0..52b6bc3 100644
 +  uint64_t m_basePushed = 0;
  };
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStream.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStream.h
-index 6c230f5..3ded7e4 100644
+index b899c4b..b52637f 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStream.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStream.h
-@@ -168,6 +168,11 @@ public:
+@@ -173,6 +173,11 @@ public:
      virtual CDemuxMVC* GetExtentionDemux() = 0;
      virtual void DisableExtention() = 0;
      virtual bool OpenNextStream() = 0;
@@ -531,10 +531,10 @@ index 6c230f5..3ded7e4 100644
  
    enum ENextStream
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index 1bc9cd5..0154e3c 100644
+index 8714255..3b3dd2f 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -1352,11 +1352,20 @@ std::optional<CDVDInputStreamBluray::ClipTime> CDVDInputStreamBluray::GetClipTim
+@@ -1492,11 +1492,20 @@ std::optional<CDVDInputStreamBluray::ClipTime> CDVDInputStreamBluray::GetClipTim
    if (m_hasMVCExtension)
      return {};
  
@@ -559,7 +559,7 @@ index 1bc9cd5..0154e3c 100644
  }
  
  // the bytes of the next Read come from m_clip, or carry no clip time without one
-@@ -1366,6 +1375,7 @@ void CDVDInputStreamBluray::OpenClipSpan()
+@@ -1506,6 +1515,7 @@ void CDVDInputStreamBluray::OpenClipSpan()
      return;
  
    ClipSpan span{m_readPos};
@@ -567,7 +567,7 @@ index 1bc9cd5..0154e3c 100644
    if (m_clip)
      span.time = ClipTime{m_clip->in_time, m_clip->start_time};
    m_clipSpans.push_back(span);
-@@ -1713,6 +1723,43 @@ void CDVDInputStreamBluray::OnDemuxerReset()
+@@ -1857,6 +1867,43 @@ void CDVDInputStreamBluray::OnDemuxerReset()
    RestartExtention();
  }
  
@@ -612,10 +612,10 @@ index 1bc9cd5..0154e3c 100644
  {
    if (!m_titleInfo || playItem < 0 || static_cast<uint32_t>(playItem) >= m_titleInfo->clip_count)
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index 758f13b..ecf7baa 100644
+index f5f4d8d..4f02c37 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-@@ -161,6 +161,8 @@ public:
+@@ -184,6 +184,8 @@ public:
     *         an MVC extension
     */
    std::optional<ClipTime> GetClipTime(uint64_t readPos) const;
@@ -624,7 +624,7 @@ index 758f13b..ecf7baa 100644
  
    //! hand the clip start held at a join to the demuxer opened after it
    void ReleaseClipStart() { m_clipStartHeld = false; }
-@@ -184,6 +186,8 @@ public:
+@@ -207,6 +209,8 @@ public:
    bool AreEyesFlipped() override { return m_bFlipEyes; }
    void DisableExtention() override;
    bool OpenNextStream() override;
@@ -633,7 +633,7 @@ index 758f13b..ecf7baa 100644
  
    void SaveCurrentState(const CStreamDetails& details) override;
    UpdateState UpdateItemFromSavedStates(CFileItem& item, double time, bool& closed) override;
-@@ -318,7 +322,9 @@ protected:
+@@ -355,7 +359,9 @@ protected:
      {
        uint64_t readPos{0};
        std::optional<ClipTime> time{};
