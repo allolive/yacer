@@ -12,13 +12,13 @@ cannot retry-spin) and guard Reset() against the half-open state.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index ac40659..2040382 100644
+index 365819b..172e385 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-@@ -601,7 +601,11 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -636,7 +636,11 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
  
        CLog::Log(LOGINFO, "CDVDVideoCodecAmlogic::{}: Open decoder: fps:{:d}/{:d}", __FUNCTION__, m_hints.fpsrate, m_hints.fpsscale);
-       if (m_Codec && !m_Codec->OpenDecoder(m_hints, doviIsFEL))
+       if (m_Codec && !m_Codec->OpenDecoder(m_hints, doviIsFEL, m_videobuffer.hdrType))
 +      {
          CLog::Log(LOGERROR, "CDVDVideoCodecAmlogic::{}: Failed to open Amlogic Codec", __FUNCTION__);
 +        m_Codec->CloseDecoder();
@@ -27,7 +27,7 @@ index ac40659..2040382 100644
  
        m_videoBufferPool = std::shared_ptr<CAMLVideoBufferPool>(new CAMLVideoBufferPool());
  
-@@ -609,6 +613,9 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -644,6 +648,9 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
      }
    }
  
@@ -37,7 +37,7 @@ index ac40659..2040382 100644
    if (packet.pSideData && packet.iSideDataElems > 0)
    {
      const AVPacketSideData* sideData = av_packet_side_data_get(static_cast<AVPacketSideData*>(packet.pSideData),
-@@ -655,7 +662,8 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -690,7 +697,8 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
  
  void CDVDVideoCodecAmlogic::Reset(void)
  {

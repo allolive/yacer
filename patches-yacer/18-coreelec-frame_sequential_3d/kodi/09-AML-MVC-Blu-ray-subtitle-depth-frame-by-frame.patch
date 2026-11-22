@@ -71,7 +71,7 @@ in the table.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
-index 5acb0d55..316c7ee1 100644
+index 5acb0d5..316c7ee 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
 @@ -63,6 +63,7 @@ public:
@@ -91,7 +91,7 @@ index 5acb0d55..316c7ee1 100644
    DVDOverlayType m_type;
    bool m_enableTextAlign;
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp
-index 1af10d44..8dbfdb80 100644
+index 19df548..0feb698 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp
 @@ -300,6 +300,7 @@ std::shared_ptr<CDVDOverlay> CDVDOverlayCodecFFmpeg::GetOverlay()
@@ -104,7 +104,7 @@ index 1af10d44..8dbfdb80 100644
      overlay->palette.resize(rect.nb_colors);
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
 new file mode 100644
-index 00000000..238ee9cc
+index 0000000..238ee9c
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
 @@ -0,0 +1,215 @@
@@ -324,7 +324,7 @@ index 00000000..238ee9cc
 +
 +} // namespace AML_MVC_DEPTH
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodec.cpp
-index 4cd55fe5..8bba9580 100644
+index 4cd55fe..8bba958 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodec.cpp
 @@ -43,7 +43,7 @@ void VideoPicture::Reset()
@@ -337,7 +337,7 @@ index 4cd55fe5..8bba9580 100644
    qp_table = nullptr;
    qstride = 0;
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodec.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodec.h
-index 9635b7b6..f9a31fb1 100644
+index 9635b7b..f9a31fb 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodec.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodec.h
 @@ -20,6 +20,7 @@ extern "C" {
@@ -359,10 +359,10 @@ index 9635b7b6..f9a31fb1 100644
    int8_t* qp_table;                //< Quantization parameters, primarily used by filters
    int qstride;
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index 5c4690f3..36096397 100644
+index ec08af3..52abc28 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-@@ -626,6 +626,53 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -633,6 +633,53 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
  
    if (pData)
    {
@@ -416,7 +416,7 @@ index 5c4690f3..36096397 100644
      // named by how the EL arrives; a track pair can open with solo packets, so
      // dt-dl may correct an early st-dl
      if (m_dualLayer && m_streamMeta.structure != "dt-dl")
-@@ -817,6 +864,7 @@ void CDVDVideoCodecAmlogic::Reset(void)
+@@ -824,6 +871,7 @@ void CDVDVideoCodecAmlogic::Reset(void)
    m_has_keyframe = false;
    if (m_frameNumRewriter)
      m_frameNumRewriter->ResetState();
@@ -424,7 +424,7 @@ index 5c4690f3..36096397 100644
    if (m_hints.codec_tag == MKTAG('M', 'V', 'C', '1') && m_mvcParams == MvcParams::OWN)
    {
      m_mvcParamsWait = MvcParamsWaitLimit(m_hints);
-@@ -856,6 +904,16 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
+@@ -867,6 +915,16 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
      pVideoPicture->videoBuffer = nullptr;
      pVideoPicture->SetParams(m_videobuffer);
  
@@ -442,7 +442,7 @@ index 5c4690f3..36096397 100644
                                       ? std::optional<double>{m_videobuffer.pts}
                                       : std::nullopt))
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-index f8388854..d78f60e9 100644
+index f1917dd..bc35069 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 @@ -10,6 +10,7 @@
@@ -453,7 +453,7 @@ index f8388854..d78f60e9 100644
  #include "DVDVideoCodec.h"
  #include "DVDStreamInfo.h"
  #include "threads/CriticalSection.h"
-@@ -140,6 +141,14 @@ private:
+@@ -147,6 +148,14 @@ private:
    int m_mvcParamsWait{0};
    int m_mvcParamsSkipped{0};
    std::vector<uint8_t> m_mvcHeader;
@@ -469,7 +469,7 @@ index f8388854..d78f60e9 100644
    bool MvcParamsScan(const uint8_t* data, uint32_t size);
    bool MvcParamsReady(const uint8_t* data, uint32_t size);
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp b/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp
-index 954f2aa1..6e45b283 100644
+index 954f2aa..6e45b28 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp
 @@ -1026,9 +1026,6 @@ void CVideoPlayerVideo::ProcessOverlays(const VideoPicture* pSource, double pts)
@@ -494,10 +494,10 @@ index 954f2aa1..6e45b283 100644
    }
  }
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
-index 6f79f69c..a6164b74 100644
+index a4999bf..dbe201f 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
-@@ -67,13 +67,17 @@ CRenderer::~CRenderer()
+@@ -68,13 +68,17 @@ CRenderer::~CRenderer()
    Flush();
  }
  
@@ -516,33 +516,109 @@ index 6f79f69c..a6164b74 100644
    m_buffers[index].push_back(e);
  }
  
-@@ -680,20 +684,24 @@ std::shared_ptr<COverlay> CRenderer::Convert(SElement& e)
+@@ -695,62 +699,66 @@ std::shared_ptr<COverlay> CRenderer::Convert(SElement& e)
        r = it->second;
    }
  
 -  if (r)
+-  {
+-    return r;
+-  }
+-
+-  if (o.IsOverlayType(DVDOVERLAY_TYPE_IMAGE))
 +  if (!r)
    {
--    return r;
+-    const CDVDOverlayImage& image = static_cast<CDVDOverlayImage&>(o);
+-    // an sdr pgs is drawn like an authored pq one, at the video's sdr white
+-    if (image.m_isSDRPgs && m_compositeVideo.transfer == AVCOL_TRC_SMPTE2084 &&
+-        m_compositeVideo.sdrWhite > 0.0f)
 +    if (o.IsOverlayType(DVDOVERLAY_TYPE_IMAGE))
-+      r = COverlay::Create(static_cast<CDVDOverlayImage&>(o), m_rs);
-+    else if (o.IsOverlayType(DVDOVERLAY_TYPE_SPU))
-+      r = COverlay::Create(static_cast<CDVDOverlaySpu&>(o));
-+
-+    m_textureCache[m_textureid] = r;
-+    o.m_textureid = m_textureid;
-+    m_textureid++;
-   }
+     {
+-      // linear bt.709 to bt.2020 primaries, ITU-R BT.2087
+-      constexpr float BT709_TO_2020[3][3] = {
+-          {0.627403896f, 0.329283039f, 0.043313065f},
+-          {0.069097289f, 0.919540395f, 0.011362316f},
+-          {0.016391439f, 0.088013308f, 0.895595253f},
+-      };
+-
+-      const float gamma = m_compositeVideo.sdrGamma;
+-      const float whiteScale = m_compositeVideo.sdrWhite / 10000.0f;
+-      CDVDOverlayImage pq(image);
+-      for (uint32_t& entry : pq.palette)
++      const CDVDOverlayImage& image = static_cast<CDVDOverlayImage&>(o);
++      // an sdr pgs is drawn like an authored pq one, at the video's sdr white
++      if (image.m_isSDRPgs && m_compositeVideo.transfer == AVCOL_TRC_SMPTE2084 &&
++          m_compositeVideo.sdrWhite > 0.0f)
+       {
+-        const uint32_t a = (entry >> PIXEL_ASHIFT) & 0xff;
+-        const float linear709[3] = {
+-            std::pow(((entry >> PIXEL_RSHIFT) & 0xff) / 255.0f, gamma) * whiteScale,
+-            std::pow(((entry >> PIXEL_GSHIFT) & 0xff) / 255.0f, gamma) * whiteScale,
+-            std::pow(((entry >> PIXEL_BSHIFT) & 0xff) / 255.0f, gamma) * whiteScale,
++        // linear bt.709 to bt.2020 primaries, ITU-R BT.2087
++        constexpr float BT709_TO_2020[3][3] = {
++            {0.627403896f, 0.329283039f, 0.043313065f},
++            {0.069097289f, 0.919540395f, 0.011362316f},
++            {0.016391439f, 0.088013308f, 0.895595253f},
+         };
  
--  if (o.IsOverlayType(DVDOVERLAY_TYPE_IMAGE))
--    r = COverlay::Create(static_cast<CDVDOverlayImage&>(o), m_rs);
+-        uint32_t code[3];
+-        for (int i = 0; i < 3; i++)
++        const float gamma = m_compositeVideo.sdrGamma;
++        const float whiteScale = m_compositeVideo.sdrWhite / 10000.0f;
++        CDVDOverlayImage pq(image);
++        for (uint32_t& entry : pq.palette)
+         {
+-          const float linear = BT709_TO_2020[i][0] * linear709[0] +
+-                               BT709_TO_2020[i][1] * linear709[1] +
+-                               BT709_TO_2020[i][2] * linear709[2];
+-          code[i] = static_cast<uint32_t>(EncodePQ(linear) * 255.0f + 0.5f);
++          const uint32_t a = (entry >> PIXEL_ASHIFT) & 0xff;
++          const float linear709[3] = {
++              std::pow(((entry >> PIXEL_RSHIFT) & 0xff) / 255.0f, gamma) * whiteScale,
++              std::pow(((entry >> PIXEL_GSHIFT) & 0xff) / 255.0f, gamma) * whiteScale,
++              std::pow(((entry >> PIXEL_BSHIFT) & 0xff) / 255.0f, gamma) * whiteScale,
++          };
++
++          uint32_t code[3];
++          for (int i = 0; i < 3; i++)
++          {
++            const float linear = BT709_TO_2020[i][0] * linear709[0] +
++                                 BT709_TO_2020[i][1] * linear709[1] +
++                                 BT709_TO_2020[i][2] * linear709[2];
++            code[i] = static_cast<uint32_t>(EncodePQ(linear) * 255.0f + 0.5f);
++          }
++
++          entry = (a << PIXEL_ASHIFT) | (code[0] << PIXEL_RSHIFT) | (code[1] << PIXEL_GSHIFT) |
++                  (code[2] << PIXEL_BSHIFT);
+         }
+-
+-        entry = (a << PIXEL_ASHIFT) | (code[0] << PIXEL_RSHIFT) | (code[1] << PIXEL_GSHIFT) |
+-                (code[2] << PIXEL_BSHIFT);
++        pq.m_isHDROverlay = true;
++        r = COverlay::Create(pq, m_rs);
+       }
+-      pq.m_isHDROverlay = true;
+-      r = COverlay::Create(pq, m_rs);
++      else
++        r = COverlay::Create(image, m_rs);
+     }
+-    else
+-      r = COverlay::Create(image, m_rs);
+-  }
 -  else if (o.IsOverlayType(DVDOVERLAY_TYPE_SPU))
 -    r = COverlay::Create(static_cast<CDVDOverlaySpu&>(o));
--
++    else if (o.IsOverlayType(DVDOVERLAY_TYPE_SPU))
++      r = COverlay::Create(static_cast<CDVDOverlaySpu&>(o));
+ 
 -  m_textureCache[m_textureid] = r;
 -  o.m_textureid = m_textureid;
 -  m_textureid++;
--
++    m_textureCache[m_textureid] = r;
++    o.m_textureid = m_textureid;
++    m_textureid++;
++  }
+ 
 +  // the 3D depth follows the video picture: this buffer's, on the render thread
 +  if (r)
 +  {
@@ -553,10 +629,10 @@ index 6f79f69c..a6164b74 100644
  }
  
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
-index 87cc11b0..a210e05b 100644
+index 5cccb79..3410060 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
-@@ -19,6 +19,7 @@
+@@ -20,6 +20,7 @@
  #include <atomic>
  #include <map>
  #include <memory>
@@ -564,7 +640,7 @@ index 87cc11b0..a210e05b 100644
  #include <vector>
  
  typedef struct ass_image ASS_Image;
-@@ -92,7 +93,7 @@ namespace OVERLAY {
+@@ -93,7 +94,7 @@ namespace OVERLAY {
      // pixels are already HDR, matching video's colorimetry
      bool m_isHDROverlay{false};
  
@@ -573,7 +649,7 @@ index 87cc11b0..a210e05b 100644
      bool m_pgsSubtitle{false};
  
    protected:
-@@ -113,7 +114,10 @@ namespace OVERLAY {
+@@ -114,7 +115,10 @@ namespace OVERLAY {
      // Implementation of Observer
      void Notify(const Observable& obs, const ObservableMessage msg) override;
  
@@ -585,7 +661,7 @@ index 87cc11b0..a210e05b 100644
      virtual void Render(int idx, float depth = 0.0f);
  
      // render overlays already in HDR (not sRGB)
-@@ -185,6 +189,8 @@ namespace OVERLAY {
+@@ -186,6 +190,8 @@ namespace OVERLAY {
        SElement() : overlay_dvd(NULL) { pts = 0.0; }
        double pts;
        std::shared_ptr<CDVDOverlay> overlay_dvd;
@@ -595,10 +671,10 @@ index 87cc11b0..a210e05b 100644
        // render. libass owns the pointer; valid only until the next
        // ass_render_frame call.
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-index be618c56..f820ebbb 100644
+index c10ef01..1fedfbc 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-@@ -677,7 +677,7 @@ void ScaleRgbaLight(std::vector<uint32_t>& rgba, float factor)
+@@ -759,7 +759,7 @@ void ScaleRgbaLight(std::vector<uint32_t>& rgba, float factor)
    }
  }
  
@@ -607,7 +683,7 @@ index be618c56..f820ebbb 100644
  {
    auto stereo_mode = CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode();
  
-@@ -689,14 +689,21 @@ int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
+@@ -771,14 +771,21 @@ int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
      return 0;
    }
  
@@ -636,7 +712,7 @@ index be618c56..f820ebbb 100644
  
    // correct depth according to the current left/right eye view
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
-index 24311ee8..b5911e5f 100644
+index def5ddf..86384d0 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
 @@ -11,6 +11,7 @@
@@ -647,19 +723,19 @@ index 24311ee8..b5911e5f 100644
  #include <vector>
  
  class CDVDOverlayImage;
-@@ -137,6 +138,6 @@ void FindVisibleBox(const uint8_t* src,
- void PixelArtScale(std::vector<uint32_t>& rgba, int& width, int& height, int passes);
- 
+@@ -142,6 +143,6 @@ void PixelArtScale(std::vector<uint32_t>& rgba, int& width, int& height, int pas
  bool convert_quad(ASS_Image* images, SQuads& quads, int max_x);
+ // GPU-bounded atlas pages in libass drawing order.
+ bool convert_quad_pages(ASS_Image* images, std::vector<SQuads>& pages, int maxTextureSize);
 -int GetStereoscopicDepth(bool isPgs, int subtitleDepth);
 +int GetStereoscopicDepth(bool isPgs, std::optional<int> subtitleDepth);
  
  } // namespace OVERLAY
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-index 7f2a7026..943e15d1 100644
+index c9fa695..2f41bc3 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-@@ -1320,7 +1320,9 @@ bool CRenderManager::AddVideoPicture(const VideoPicture& picture, volatile std::
+@@ -1332,7 +1332,9 @@ bool CRenderManager::AddVideoPicture(const VideoPicture& picture, volatile std::
    return true;
  }
  
@@ -670,7 +746,7 @@ index 7f2a7026..943e15d1 100644
  {
    int idx;
    {
-@@ -1330,7 +1332,7 @@ void CRenderManager::AddOverlay(std::shared_ptr<CDVDOverlay> o, double pts)
+@@ -1342,7 +1344,7 @@ void CRenderManager::AddOverlay(std::shared_ptr<CDVDOverlay> o, double pts)
      idx = m_free.front();
    }
    std::unique_lock lock(m_datalock);
@@ -680,7 +756,7 @@ index 7f2a7026..943e15d1 100644
  
  bool CRenderManager::Supports(ERENDERFEATURE feature) const
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
-index ed9a78f7..8355b965 100644
+index ed9a78f..8355b96 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
 @@ -124,7 +124,8 @@ public:

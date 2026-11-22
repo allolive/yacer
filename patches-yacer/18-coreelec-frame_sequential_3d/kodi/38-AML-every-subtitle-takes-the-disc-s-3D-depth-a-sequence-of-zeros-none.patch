@@ -23,7 +23,7 @@ lose the PG-only flag that 09 added.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
-index 316c7ee1..5acb0d55 100644
+index 316c7ee..5acb0d5 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlay.h
 @@ -63,7 +63,6 @@ public:
@@ -43,7 +43,7 @@ index 316c7ee1..5acb0d55 100644
    DVDOverlayType m_type;
    bool m_enableTextAlign;
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp
-index 8dbfdb80..1af10d44 100644
+index 0feb698..19df548 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Overlay/DVDOverlayCodecFFmpeg.cpp
 @@ -300,7 +300,6 @@ std::shared_ptr<CDVDOverlay> CDVDOverlayCodecFFmpeg::GetOverlay()
@@ -55,7 +55,7 @@ index 8dbfdb80..1af10d44 100644
      overlay->pixels.resize(rect.w * rect.h);
      overlay->palette.resize(rect.nb_colors);
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
-index 8a87cfd8..e26f5c64 100644
+index 8a87cfd..e26f5c6 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
 @@ -109,12 +109,19 @@ inline bool ParseOfmd(const uint8_t* data, size_t size, int lengthSize, Offsets&
@@ -104,10 +104,10 @@ index 8a87cfd8..e26f5c64 100644
  
  } // namespace AML_MVC_DEPTH
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
-index a6164b74..055387c0 100644
+index dbe201f..0119822 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
-@@ -312,7 +312,7 @@ void CRenderer::Render(COverlay* o)
+@@ -313,7 +313,7 @@ void CRenderer::Render(COverlay* o)
      }
    }
  
@@ -116,7 +116,7 @@ index a6164b74..055387c0 100644
  
    o->Render(state);
  }
-@@ -698,10 +698,7 @@ std::shared_ptr<COverlay> CRenderer::Convert(SElement& e)
+@@ -755,10 +755,7 @@ std::shared_ptr<COverlay> CRenderer::Convert(SElement& e)
  
    // the 3D depth follows the video picture: this buffer's, on the render thread
    if (r)
@@ -128,10 +128,10 @@ index a6164b74..055387c0 100644
  }
  
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
-index a210e05b..c57052b4 100644
+index 3410060..ccaa4c1 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
-@@ -94,7 +94,6 @@ namespace OVERLAY {
+@@ -95,7 +95,6 @@ namespace OVERLAY {
      bool m_isHDROverlay{false};
  
      std::optional<int> m_3dSubtitleDepth;
@@ -140,10 +140,10 @@ index a210e05b..c57052b4 100644
    protected:
      /*!
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-index f820ebbb..14f48bee 100644
+index 1fedfbc..7315bd2 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-@@ -677,7 +677,7 @@ void ScaleRgbaLight(std::vector<uint32_t>& rgba, float factor)
+@@ -759,7 +759,7 @@ void ScaleRgbaLight(std::vector<uint32_t>& rgba, float factor)
    }
  }
  
@@ -152,7 +152,7 @@ index f820ebbb..14f48bee 100644
  {
    auto stereo_mode = CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode();
  
-@@ -690,11 +690,11 @@ int GetStereoscopicDepth(bool isPgs, std::optional<int> subtitleDepth)
+@@ -772,11 +772,11 @@ int GetStereoscopicDepth(bool isPgs, std::optional<int> subtitleDepth)
    }
  
    int depth = 0;
@@ -169,13 +169,13 @@ index f820ebbb..14f48bee 100644
      const int width = CServiceBroker::GetWinSystem()->GetGfxContext().GetWidth();
      depth = static_cast<int>(std::lround(*subtitleDepth * width / 1920.0));
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
-index b5911e5f..fd142e83 100644
+index 86384d0..8046f7b 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
-@@ -138,6 +138,6 @@ void FindVisibleBox(const uint8_t* src,
- void PixelArtScale(std::vector<uint32_t>& rgba, int& width, int& height, int passes);
- 
+@@ -143,6 +143,6 @@ void PixelArtScale(std::vector<uint32_t>& rgba, int& width, int& height, int pas
  bool convert_quad(ASS_Image* images, SQuads& quads, int max_x);
+ // GPU-bounded atlas pages in libass drawing order.
+ bool convert_quad_pages(ASS_Image* images, std::vector<SQuads>& pages, int maxTextureSize);
 -int GetStereoscopicDepth(bool isPgs, std::optional<int> subtitleDepth);
 +int GetStereoscopicDepth(std::optional<int> subtitleDepth);
  

@@ -32,7 +32,7 @@ before.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/cores/VideoPlayer/DVDMessageQueue.cpp b/xbmc/cores/VideoPlayer/DVDMessageQueue.cpp
-index 7b2bade5e6..003fbf56e7 100644
+index 6dbee5e..54c70a0 100644
 --- a/xbmc/cores/VideoPlayer/DVDMessageQueue.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDMessageQueue.cpp
 @@ -38,6 +38,7 @@ void CDVDMessageQueue::Init()
@@ -59,8 +59,8 @@ index 7b2bade5e6..003fbf56e7 100644
  }
  
  MsgQueueReturnCode CDVDMessageQueue::Put(const std::shared_ptr<CDVDMsg>& pMsg, int priority)
-@@ -289,8 +292,16 @@ unsigned CDVDMessageQueue::GetPacketCount(CDVDMsg::Message type)
-   return count;
+@@ -296,8 +299,16 @@ bool CDVDMessageQueue::IsEmpty() const
+   return m_messages.empty() && m_prioMessages.empty();
  }
  
 -void CDVDMessageQueue::WaitUntilEmpty()
@@ -77,7 +77,7 @@ index 7b2bade5e6..003fbf56e7 100644
    {
      std::unique_lock lock(m_section);
      m_drain = true;
-@@ -299,12 +310,13 @@ void CDVDMessageQueue::WaitUntilEmpty()
+@@ -306,12 +317,13 @@ void CDVDMessageQueue::WaitUntilEmpty()
    CLog::Log(LOGINFO, "CDVDMessageQueue({})::WaitUntilEmpty", m_owner);
    auto msg = std::make_shared<CDVDMsgGeneralSynchronize>(40s, SYNCSOURCE_ANY);
    Put(msg);
@@ -93,12 +93,12 @@ index 7b2bade5e6..003fbf56e7 100644
  
  int CDVDMessageQueue::GetLevel(bool dataLevel) const
 diff --git a/xbmc/cores/VideoPlayer/DVDMessageQueue.h b/xbmc/cores/VideoPlayer/DVDMessageQueue.h
-index 93288d1bec..543d3bab96 100644
+index 59a5e31..5d1611c 100644
 --- a/xbmc/cores/VideoPlayer/DVDMessageQueue.h
 +++ b/xbmc/cores/VideoPlayer/DVDMessageQueue.h
-@@ -77,7 +77,8 @@ public:
-   double GetTimeSize() const;
+@@ -78,7 +78,8 @@ public:
    unsigned GetPacketCount(CDVDMsg::Message type);
+   bool IsEmpty() const;
    bool ReceivedAbortRequest() { return m_bAbortRequest; }
 -  void WaitUntilEmpty();
 +  bool WaitUntilEmpty(); // false when AbortDrain or Abort ended it
@@ -106,7 +106,7 @@ index 93288d1bec..543d3bab96 100644
  
    // non messagequeue related functions
    bool IsFull() const { return GetLevel(true) == 100; }
-@@ -106,6 +107,7 @@ private:
+@@ -107,6 +108,7 @@ private:
    mutable CCriticalSection m_section;
  
    std::atomic<bool> m_bAbortRequest = false;
@@ -115,7 +115,7 @@ index 93288d1bec..543d3bab96 100644
    bool m_drain = false;
  
 diff --git a/xbmc/cores/VideoPlayer/IVideoPlayer.h b/xbmc/cores/VideoPlayer/IVideoPlayer.h
-index 673f09a043..fb96beb463 100644
+index 673f09a..fb96beb 100644
 --- a/xbmc/cores/VideoPlayer/IVideoPlayer.h
 +++ b/xbmc/cores/VideoPlayer/IVideoPlayer.h
 @@ -51,6 +51,8 @@ public:
@@ -128,10 +128,10 @@ index 673f09a043..fb96beb463 100644
    virtual bool AcceptsData() const = 0;
    virtual bool IsStalled() const = 0;
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-index e0e6a5f861..b6cb117663 100644
+index 07e7926..b791be6 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-@@ -877,6 +877,10 @@ bool CVideoPlayer::CloseFile(bool reopen)
+@@ -885,6 +885,10 @@ bool CVideoPlayer::CloseFile(bool reopen)
    if(m_pInputStream)
      m_pInputStream->Abort();
  
@@ -143,7 +143,7 @@ index e0e6a5f861..b6cb117663 100644
  
    CLog::Log(LOGINFO, "VideoPlayer: waiting for threads to exit");
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp b/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
-index c75e572bf6..6780b8476a 100644
+index c75e572..6780b84 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
 @@ -151,9 +151,9 @@ void CVideoPlayerAudio::CloseStream(bool bWaitForBuffers)
@@ -159,7 +159,7 @@ index c75e572bf6..6780b8476a 100644
    // send abort message to the audio queue
    m_messageQueue.Abort();
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayerAudio.h b/xbmc/cores/VideoPlayer/VideoPlayerAudio.h
-index d424ebcb5f..e7757f8b9e 100644
+index d424ebc..e7757f8 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayerAudio.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayerAudio.h
 @@ -52,6 +52,7 @@ public:
@@ -171,7 +171,7 @@ index d424ebcb5f..e7757f8b9e 100644
    void SetDynamicRangeCompression(long drc) override { m_audioSink.SetDynamicRangeCompression(drc); }
    float GetDynamicRangeAmplification() const override { return 0.0f; }
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayerVideo.h b/xbmc/cores/VideoPlayer/VideoPlayerVideo.h
-index 556e22580a..b2b5ed95a7 100644
+index 90cf16b..36b385a 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayerVideo.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayerVideo.h
 @@ -61,6 +61,7 @@ public:

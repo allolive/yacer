@@ -19,7 +19,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/cores/VideoPlayer/AudioPreroll.h b/xbmc/cores/VideoPlayer/AudioPreroll.h
 new file mode 100644
-index 0000000000..5ba7d54b8b
+index 0000000..5ba7d54
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/AudioPreroll.h
 @@ -0,0 +1,276 @@
@@ -300,7 +300,7 @@ index 0000000000..5ba7d54b8b
 +  bool m_seenRunningUnsynced{false};
 +};
 diff --git a/xbmc/cores/VideoPlayer/AudioSinkAE.cpp b/xbmc/cores/VideoPlayer/AudioSinkAE.cpp
-index b38d13ab55..982525db75 100644
+index b38d13a..982525d 100644
 --- a/xbmc/cores/VideoPlayer/AudioSinkAE.cpp
 +++ b/xbmc/cores/VideoPlayer/AudioSinkAE.cpp
 @@ -13,6 +13,7 @@
@@ -415,7 +415,7 @@ index b38d13ab55..982525db75 100644
  
  void CAudioSinkAE::SetSyncErrorCorrection(double correction)
 diff --git a/xbmc/cores/VideoPlayer/AudioSinkAE.h b/xbmc/cores/VideoPlayer/AudioSinkAE.h
-index e2aff528aa..4ed2446d66 100644
+index e2aff52..4ed2446 100644
 --- a/xbmc/cores/VideoPlayer/AudioSinkAE.h
 +++ b/xbmc/cores/VideoPlayer/AudioSinkAE.h
 @@ -8,6 +8,7 @@
@@ -448,7 +448,7 @@ index e2aff528aa..4ed2446d66 100644
    std::atomic_bool m_bAbort;
    CDVDClock *m_pClock;
 diff --git a/xbmc/cores/VideoPlayer/DVDMessage.h b/xbmc/cores/VideoPlayer/DVDMessage.h
-index 6d9c53f794..8623322263 100644
+index 6d9c53f..8623322 100644
 --- a/xbmc/cores/VideoPlayer/DVDMessage.h
 +++ b/xbmc/cores/VideoPlayer/DVDMessage.h
 @@ -47,6 +47,7 @@ public:
@@ -469,7 +469,7 @@ index 6d9c53f794..8623322263 100644
  
 diff --git a/xbmc/cores/VideoPlayer/PlaybackPreroll.h b/xbmc/cores/VideoPlayer/PlaybackPreroll.h
 new file mode 100644
-index 0000000000..19e6298cb8
+index 0000000..19e6298
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/PlaybackPreroll.h
 @@ -0,0 +1,205 @@
@@ -679,7 +679,7 @@ index 0000000000..19e6298cb8
 +  std::optional<double> m_lastSubmittedEnd;
 +};
 diff --git a/xbmc/cores/VideoPlayer/PlaybackResumeGate.h b/xbmc/cores/VideoPlayer/PlaybackResumeGate.h
-index 51eec56102..ac80b1ce40 100644
+index 51eec56..ac80b1c 100644
 --- a/xbmc/cores/VideoPlayer/PlaybackResumeGate.h
 +++ b/xbmc/cores/VideoPlayer/PlaybackResumeGate.h
 @@ -123,6 +123,7 @@ public:
@@ -691,7 +691,7 @@ index 51eec56102..ac80b1ce40 100644
    bool IsCurrentRequest(uint64_t request) const
    {
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-index c926568aaa..cad75e9469 100644
+index b99ae4f..570e84c 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 @@ -8,6 +8,7 @@
@@ -710,7 +710,7 @@ index c926568aaa..cad75e9469 100644
  #include <iterator>
  #include <limits>
  #include <memory>
-@@ -1784,6 +1786,9 @@ void CVideoPlayer::Process()
+@@ -1798,6 +1800,9 @@ void CVideoPlayer::Process()
      if (PollResumeGate())
        continue;
  
@@ -720,7 +720,7 @@ index c926568aaa..cad75e9469 100644
      // the last stream plays out before the next one opens, with messages still served
      if (m_nextStream.Pending())
      {
-@@ -2531,6 +2536,11 @@ bool CVideoPlayer::ShouldWaitForSync(std::chrono::steady_clock::time_point now)
+@@ -2636,6 +2641,11 @@ bool CVideoPlayer::ShouldWaitForSync(std::chrono::steady_clock::time_point now)
  
  void CVideoPlayer::HandlePlaySpeed()
  {
@@ -732,17 +732,17 @@ index c926568aaa..cad75e9469 100644
    const bool isInMenu = IsInMenuInternal();
    const bool tolerateStall =
        isInMenu || (m_CurrentVideo.hint.flags & StreamFlags::FLAG_STILL_IMAGES);
-@@ -2957,7 +2967,8 @@ bool CVideoPlayer::CheckPlayerInit(CCurrentStream& current)
-       return true;
+@@ -3063,7 +3073,8 @@ bool CVideoPlayer::CheckPlayerInit(CCurrentStream& current)
      }
  
--    if ((current.startpts - current.dts) > DVD_SEC_TO_TIME(20))
+     // other players keep early packets, so nothing is decoded to reach the start
+-    if ((current.type == StreamType::AUDIO || current.type == StreamType::VIDEO) &&
 +    if (!m_resumePreroll.Active() &&
-+        (current.startpts - current.dts) > DVD_SEC_TO_TIME(20))
++        (current.type == StreamType::AUDIO || current.type == StreamType::VIDEO) &&
+         (current.startpts - current.dts) > DVD_SEC_TO_TIME(20))
      {
        CLog::Log(LOGDEBUG, "{} - too far to decode before finishing seek", __FUNCTION__);
-       if(m_CurrentAudio.startpts != DVD_NOPTS_VALUE)
-@@ -3413,13 +3424,16 @@ void CVideoPlayer::SendPlayerMessage(std::shared_ptr<CDVDMsg> pMsg, unsigned int
+@@ -3520,13 +3531,16 @@ void CVideoPlayer::SendPlayerMessage(std::shared_ptr<CDVDMsg> pMsg, unsigned int
  void CVideoPlayer::OnExit()
  {
    CLog::Log(LOGINFO, "CVideoPlayer::OnExit()");
@@ -760,7 +760,7 @@ index c926568aaa..cad75e9469 100644
      CLog::Log(LOGINFO, "VideoPlayer: eof, waiting for queues to empty");
  
    CFileItem fileItem(m_item);
-@@ -3447,8 +3461,10 @@ void CVideoPlayer::OnExit()
+@@ -3554,8 +3568,10 @@ void CVideoPlayer::OnExit()
        break;
    }
  
@@ -773,7 +773,7 @@ index c926568aaa..cad75e9469 100644
    CloseStream(m_CurrentTeletext,!m_bAbortRequest);
    CloseStream(m_CurrentRadioRDS, !m_bAbortRequest);
    CloseStream(m_CurrentAudioID3, !m_bAbortRequest);
-@@ -3519,6 +3535,8 @@ void CVideoPlayer::HandleMessages()
+@@ -3627,6 +3643,8 @@ void CVideoPlayer::HandleMessages()
      if (pMsg->IsType(CDVDMsg::PLAYER_OPENFILE) &&
          m_messenger.GetPacketCount(CDVDMsg::PLAYER_OPENFILE) == 0)
      {
@@ -782,7 +782,7 @@ index c926568aaa..cad75e9469 100644
        m_resumeGate.Cancel();
        CDVDMsgOpenFile& msg(*std::static_pointer_cast<CDVDMsgOpenFile>(pMsg));
  
-@@ -3572,6 +3590,8 @@ void CVideoPlayer::HandleMessages()
+@@ -3680,6 +3698,8 @@ void CVideoPlayer::HandleMessages()
          m_messenger.GetPacketCount(CDVDMsg::PLAYER_SEEK_CHAPTER) == 0)
      {
        CDVDMsgPlayerSeek& msg(*std::static_pointer_cast<CDVDMsgPlayerSeek>(pMsg));
@@ -791,7 +791,7 @@ index c926568aaa..cad75e9469 100644
  
        if (!m_State.canseek)
        {
-@@ -3584,7 +3604,7 @@ void CVideoPlayer::HandleMessages()
+@@ -3692,7 +3712,7 @@ void CVideoPlayer::HandleMessages()
            m_CurrentVideo.syncState != IDVDStreamPlayer::SYNC_INSYNC)
        {
          double now = m_clock.GetAbsoluteClock();
@@ -800,7 +800,7 @@ index c926568aaa..cad75e9469 100644
              (now - m_State.lastSeek)/1000 < 2000 &&
              !msg.GetAccurate())
          {
-@@ -3704,6 +3724,7 @@ void CVideoPlayer::HandleMessages()
+@@ -3812,6 +3832,7 @@ void CVideoPlayer::HandleMessages()
               m_messenger.GetPacketCount(CDVDMsg::PLAYER_SEEK) == 0 &&
               m_messenger.GetPacketCount(CDVDMsg::PLAYER_SEEK_CHAPTER) == 0)
      {
@@ -808,7 +808,7 @@ index c926568aaa..cad75e9469 100644
        m_processInfo->SeekFinished(0);
        SetCaching(CACHESTATE_FLUSH);
  
-@@ -4001,6 +4022,9 @@ void CVideoPlayer::HandleMessages()
+@@ -4111,6 +4132,9 @@ void CVideoPlayer::HandleMessages()
        if (m_resumeGate.IsHolding() && speed == DVD_PLAYSPEED_NORMAL && !msg->IsTempo())
          continue;
  
@@ -818,7 +818,7 @@ index c926568aaa..cad75e9469 100644
        const bool deferResume =
            notification == CDVDMsgPlayerSetSpeed::Notification::RESUMED &&
            speed == DVD_PLAYSPEED_NORMAL && !msg->IsTempo() &&
-@@ -4011,6 +4035,13 @@ void CVideoPlayer::HandleMessages()
+@@ -4121,6 +4145,13 @@ void CVideoPlayer::HandleMessages()
        if (deferResume)
        {
          auto fence = m_resumeGate.Begin(speed, false, CPlaybackResumeGate::Clock::now());
@@ -832,7 +832,7 @@ index c926568aaa..cad75e9469 100644
          try
          {
            // This dispatch only queues Python callbacks. Keep servicing player
-@@ -4026,6 +4057,7 @@ void CVideoPlayer::HandleMessages()
+@@ -4136,6 +4167,7 @@ void CVideoPlayer::HandleMessages()
          continue;
        }
  
@@ -840,7 +840,7 @@ index c926568aaa..cad75e9469 100644
        m_resumeGate.Cancel();
        if (notification == CDVDMsgPlayerSetSpeed::Notification::RESUMED)
          m_callback.OnPlayBackResumed();
-@@ -4101,6 +4133,11 @@ void CVideoPlayer::HandleMessages()
+@@ -4211,6 +4243,11 @@ void CVideoPlayer::HandleMessages()
        m_VideoPlayerVideo->SetSpeed(speed);
        m_streamPlayerSpeed = speed;
      }
@@ -852,7 +852,7 @@ index c926568aaa..cad75e9469 100644
      else if (pMsg->IsType(CDVDMsg::PLAYER_RESUME_BARRIER))
      {
        const auto request = std::static_pointer_cast<CDVDMsgType<uint64_t>>(pMsg)->m_value;
-@@ -4201,6 +4238,8 @@ void CVideoPlayer::HandleMessages()
+@@ -4311,6 +4348,8 @@ void CVideoPlayer::HandleMessages()
      else if (pMsg->IsType(CDVDMsg::PLAYER_ABORT))
      {
        CLog::Log(LOGDEBUG, "CVideoPlayer - CDVDMsg::PLAYER_ABORT");
@@ -861,7 +861,7 @@ index c926568aaa..cad75e9469 100644
        m_resumeGate.Cancel();
        m_bAbortRequest = true;
      }
-@@ -4233,6 +4272,15 @@ void CVideoPlayer::ReleaseResumeGate(const CPlaybackResumeGate::Release& release
+@@ -4343,6 +4382,15 @@ void CVideoPlayer::ReleaseResumeGate(const CPlaybackResumeGate::Release& release
                release.request, release.generation,
                release.outcome == CPlaybackResumeGate::Outcome::TIMED_OUT ? "timeout" : "callback failure");
  
@@ -877,7 +877,7 @@ index c926568aaa..cad75e9469 100644
    m_playSpeed = release.speed;
    PublishPlaySpeed(release.speed, release.tempo);
    m_processInfo->SetFrameAdvance(false);
-@@ -4248,6 +4296,331 @@ void CVideoPlayer::ReleaseResumeGate(const CPlaybackResumeGate::Release& release
+@@ -4358,6 +4406,331 @@ void CVideoPlayer::ReleaseResumeGate(const CPlaybackResumeGate::Release& release
    }
  }
  
@@ -1209,7 +1209,7 @@ index c926568aaa..cad75e9469 100644
  void CVideoPlayer::SetCaching(ECacheState state)
  {
    // Any move off CACHESTATE_FULL ends a source-underrun hold, a seek included.
-@@ -5386,7 +5759,33 @@ void CVideoPlayer::FlushBuffers(double pts, bool accurate, bool sync)
+@@ -5571,7 +5944,33 @@ void CVideoPlayer::FlushBuffers(double pts, bool accurate, bool sync)
    m_displayTime.Clear();
    m_nextStreamSyncing = false;
    CLog::Log(LOGDEBUG, "CVideoPlayer::FlushBuffers - flushing buffers");
@@ -1244,7 +1244,7 @@ index c926568aaa..cad75e9469 100644
    double startpts;
    if (accurate)
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.h b/xbmc/cores/VideoPlayer/VideoPlayer.h
-index 169596e9a8..1310c58ea4 100644
+index 830d97a..9aac481 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.h
 @@ -9,6 +9,7 @@
@@ -1263,7 +1263,7 @@ index 169596e9a8..1310c58ea4 100644
  #include "VideoPlayerAudioID3.h"
  #include "VideoPlayerRadioRDS.h"
  #include "VideoPlayerSubtitle.h"
-@@ -504,6 +506,12 @@ protected:
+@@ -510,6 +512,12 @@ protected:
  
    bool PollResumeGate();
    void ReleaseResumeGate(const CPlaybackResumeGate::Release& release);
@@ -1276,7 +1276,7 @@ index 169596e9a8..1310c58ea4 100644
    void HandleMessages();
    void HandlePlaySpeed();
    bool TryEnterSourceUnderrunHold();
-@@ -627,6 +635,13 @@ protected:
+@@ -638,6 +646,13 @@ protected:
    int m_streamPlayerSpeed;
    std::mutex m_speedRequestMutex;
    CPlaybackResumeGate m_resumeGate;
@@ -1291,7 +1291,7 @@ index 169596e9a8..1310c58ea4 100644
    struct SSpeedState
    {
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp b/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
-index 6780b8476a..c851b08f69 100644
+index 6780b84..c851b08 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
 @@ -176,6 +176,7 @@ void CVideoPlayerAudio::CloseStream(bool bWaitForBuffers)
@@ -1605,7 +1605,7 @@ index 6780b8476a..c851b08f69 100644
  
    return true;
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayerAudio.h b/xbmc/cores/VideoPlayer/VideoPlayerAudio.h
-index e7757f8b9e..239612d68c 100644
+index e7757f8..239612d 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayerAudio.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayerAudio.h
 @@ -86,6 +86,10 @@ protected:
@@ -1630,7 +1630,7 @@ index e7757f8b9e..239612d68c 100644
    std::unique_ptr<CDVDAudioCodec> m_pAudioCodec; // audio codec
    BitstreamStats m_audioStats;
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp b/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp
-index a76c33baff..9a627f2eef 100644
+index a76c33b..9a627f2 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayerVideo.cpp
 @@ -468,6 +468,7 @@ void CVideoPlayerVideo::Process()
@@ -1744,7 +1744,7 @@ index a76c33baff..9a627f2eef 100644
      m_droppingStats.AddOutputDropGain(pPicture->pts, 1);
      return OUTPUT_DROPPED;
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayerVideo.h b/xbmc/cores/VideoPlayer/VideoPlayerVideo.h
-index 36b385a60c..960c853f5f 100644
+index 36b385a..960c853 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayerVideo.h
 +++ b/xbmc/cores/VideoPlayer/VideoPlayerVideo.h
 @@ -156,6 +156,8 @@ protected:
@@ -1757,10 +1757,10 @@ index 36b385a60c..960c853f5f 100644
    EOutputState m_outputSate{OUTPUT_NORMAL};
  };
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.h b/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.h
-index 75b0a3a39f..77862751cd 100644
+index 84b82c6..ab2af54 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.h
-@@ -66,6 +66,14 @@ public:
+@@ -68,6 +68,14 @@ public:
    virtual void SetBufferSize(int numBuffers) { }
    virtual void ReleaseBuffer(int idx) { }
    virtual bool NeedBuffer(int idx) { return false; }
@@ -1776,7 +1776,7 @@ index 75b0a3a39f..77862751cd 100644
    //! True when video never reaches the framebuffer: a DRM plane, an Android
    //! SurfaceView, the Amlogic video layer. Such a renderer must produce its
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-index d2b3399384..637c61ee4a 100644
+index 9c051f7..f54360e 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 @@ -116,6 +116,98 @@ void CRenderManager::SetVideoSettings(const CVideoSettings& settings)
@@ -1909,7 +1909,7 @@ index d2b3399384..637c61ee4a 100644
      XbmcThreads::EndTime<> endtime(5000ms);
      m_forceNext = true;
      while (m_presentstep != PRESENT_IDLE)
-@@ -300,6 +409,9 @@ bool CRenderManager::IsConfigured() const
+@@ -302,6 +411,9 @@ bool CRenderManager::IsConfigured() const
  
  void CRenderManager::ShowVideo(bool enable)
  {
@@ -1933,7 +1933,7 @@ index d2b3399384..637c61ee4a 100644
      if (m_pRenderer)
      {
        m_overlays.Flush();
-@@ -1037,10 +1156,16 @@ void CRenderManager::SetSubtitleVerticalPosition(int value, bool save)
+@@ -1058,10 +1177,16 @@ void CRenderManager::SetSubtitleVerticalPosition(int value, bool save)
    m_overlays.SetSubtitleVerticalPosition(value, save);
  }
  
@@ -1951,7 +1951,7 @@ index d2b3399384..637c61ee4a 100644
    if (m_free.empty())
      return false;
  
-@@ -1052,6 +1177,7 @@ bool CRenderManager::AddVideoPicture(const VideoPicture& picture, volatile std::
+@@ -1073,6 +1198,7 @@ bool CRenderManager::AddVideoPicture(const VideoPicture& picture, volatile std::
        return false;
  
      m_pRenderer->AddVideoPicture(picture, index);
@@ -1959,7 +1959,7 @@ index d2b3399384..637c61ee4a 100644
    }
  
  
-@@ -1110,7 +1236,7 @@ bool CRenderManager::AddVideoPicture(const VideoPicture& picture, volatile std::
+@@ -1131,7 +1257,7 @@ bool CRenderManager::AddVideoPicture(const VideoPicture& picture, volatile std::
      m_presentevent.notifyAll();
    }
  
@@ -1968,7 +1968,7 @@ index d2b3399384..637c61ee4a 100644
    {
      m_forceNext = true;
      XbmcThreads::EndTime<> endtime(200ms);
-@@ -1168,6 +1294,13 @@ int CRenderManager::WaitForBuffer(volatile std::atomic_bool& bStop,
+@@ -1189,6 +1315,13 @@ int CRenderManager::WaitForBuffer(volatile std::atomic_bool& bStop,
  {
    std::unique_lock lock(m_presentlock);
  
@@ -1982,7 +1982,7 @@ index d2b3399384..637c61ee4a 100644
    // check if gui is active and discard buffer if not
    // this keeps videoplayer going
    if (!m_bRenderGUI || !g_application.GetRenderGUI())
-@@ -1217,6 +1350,8 @@ int CRenderManager::WaitForBuffer(volatile std::atomic_bool& bStop,
+@@ -1238,6 +1371,8 @@ int CRenderManager::WaitForBuffer(volatile std::atomic_bool& bStop,
  
  void CRenderManager::PrepareNextRender()
  {
@@ -1991,7 +1991,7 @@ index d2b3399384..637c61ee4a 100644
    if (m_queued.empty())
    {
      CLog::Log(LOGERROR, "CRenderManager::PrepareNextRender - asked to prepare with nothing available");
-@@ -1225,7 +1360,8 @@ void CRenderManager::PrepareNextRender()
+@@ -1246,7 +1381,8 @@ void CRenderManager::PrepareNextRender()
      return;
    }
  
@@ -2001,7 +2001,7 @@ index d2b3399384..637c61ee4a 100644
      return;
  
    const double frameOnScreen = m_dvdClock.GetClock();
-@@ -1290,7 +1426,7 @@ void CRenderManager::PrepareNextRender()
+@@ -1311,7 +1447,7 @@ void CRenderManager::PrepareNextRender()
      combined = true;
    }
  
@@ -2010,7 +2010,7 @@ index d2b3399384..637c61ee4a 100644
    {
      // see if any future queued frames are already due
      auto iter = m_queued.begin();
-@@ -1301,6 +1437,8 @@ void CRenderManager::PrepareNextRender()
+@@ -1322,6 +1458,8 @@ void CRenderManager::PrepareNextRender()
      {
        // the slot for rendering in time is [pts .. (pts + frametime)]
        // renderer/drivers have internal queues, being slightly late here does not mean that
@@ -2019,7 +2019,7 @@ index d2b3399384..637c61ee4a 100644
        // we are really late. The likelihood that we recover decreases the greater m_lateframes
        // get. Skipping a frame is easier than having decoder dropping one (lateframes > 10)
        double x = (m_lateframes <= 6) ? 0.98 : 0;
-@@ -1341,6 +1479,8 @@ void CRenderManager::PrepareNextRender()
+@@ -1362,6 +1500,8 @@ void CRenderManager::PrepareNextRender()
      if (m_presentsource != -1)
        m_discard.push_back(m_presentsource);
      m_presentsource = idx;
@@ -2028,7 +2028,7 @@ index d2b3399384..637c61ee4a 100644
      m_queued.pop_front();
      m_presentpts = m_Queue[m_presentsource].pts - m_displayLatency;
      m_presentevent.notifyAll();
-@@ -1353,6 +1493,8 @@ void CRenderManager::PrepareNextRender()
+@@ -1374,6 +1514,8 @@ void CRenderManager::PrepareNextRender()
      m_presentstep = PRESENT_FLIP;
      m_presentsourcePast = m_presentsource;
      m_presentsource = m_queued.front();
@@ -2038,7 +2038,7 @@ index d2b3399384..637c61ee4a 100644
      m_presentpts = m_Queue[m_presentsource].pts - m_displayLatency - frametime / 2;
      m_presentevent.notifyAll();
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
-index 07bd5c5c96..ab9ea07dff 100644
+index 8689afc..50110ae 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.h
 @@ -13,6 +13,7 @@
@@ -2049,7 +2049,7 @@ index 07bd5c5c96..ab9ea07dff 100644
  #include "cores/VideoSettings.h"
  #include "threads/CriticalSection.h"
  #include "threads/Event.h"
-@@ -96,6 +97,16 @@ public:
+@@ -97,6 +98,16 @@ public:
     */
    void SetSubtitleVerticalPosition(const int value, bool save);
  
@@ -2066,7 +2066,7 @@ index 07bd5c5c96..ab9ea07dff 100644
    // Functions called from GUI
    bool Supports(ERENDERFEATURE feature) const;
    bool Supports(ESCALINGMETHOD method) const;
-@@ -104,7 +115,8 @@ public:
+@@ -105,7 +116,8 @@ public:
    void DisplayReset() { m_displayReset = true; }
  
    bool Configure(const VideoPicture& picture, float fps, unsigned int orientation, int buffers = 0);
@@ -2076,7 +2076,7 @@ index 07bd5c5c96..ab9ea07dff 100644
    void AddOverlay(std::shared_ptr<CDVDOverlay> o, double pts);
    void ShowVideo(bool enable);
  
-@@ -138,7 +150,7 @@ public:
+@@ -139,7 +151,7 @@ public:
     */
    void DiscardBuffer();
  
@@ -2085,7 +2085,7 @@ index 07bd5c5c96..ab9ea07dff 100644
    int GetDelay() { return m_videoDelay; }
  
    /*!
-@@ -183,6 +195,8 @@ protected:
+@@ -184,6 +196,8 @@ protected:
    CDebugRenderer m_debugRenderer;
    mutable CCriticalSection m_statelock;
    CCriticalSection m_presentlock;
@@ -2096,7 +2096,7 @@ index 07bd5c5c96..ab9ea07dff 100644
    bool m_bRenderGUI = true;
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/VideoPrerollGate.h b/xbmc/cores/VideoPlayer/VideoRenderers/VideoPrerollGate.h
 new file mode 100644
-index 0000000000..dbc8a9c8c4
+index 0000000..dbc8a9c
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/VideoPrerollGate.h
 @@ -0,0 +1,130 @@

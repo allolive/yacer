@@ -26,12 +26,12 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  2 files changed, 48 insertions(+)
 
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-index 76547cb4..c370c24c 100644
+index 5f4ccc2..72d99ae 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 @@ -2376,6 +2376,7 @@ void CAMLCodec::SetDoviZeroLevel5(bool value)
  
- bool CAMLCodec::OpenDecoder(CDVDStreamInfo &hints, bool doviIsFEL)
+ bool CAMLCodec::OpenDecoder(CDVDStreamInfo &hints, bool doviIsFEL, StreamHdrType outputHdrType)
  {
 +  m_stillPicture.clear();
    m_openedLayout = StreamIsStereo(hints, m_processInfo.GetVideoSettings()) ? OpenedLayout::STEREO
@@ -61,7 +61,7 @@ index 76547cb4..c370c24c 100644
    if (iSize > 50000)
      usleep(2000); // wait 2ms to process larger packets
  
-@@ -3822,6 +3826,10 @@ CDVDVideoCodec::VCReturn CAMLCodec::GetPicture(VideoPicture *pVideoPicture)
+@@ -3828,6 +3832,10 @@ CDVDVideoCodec::VCReturn CAMLCodec::GetPicture(VideoPicture *pVideoPicture)
            amlVideoFile->IOControl(AMLVIDEO_IOC_GET_VFQ, &queued_frames) == 0 ? queued_frames : 0;
    }
  
@@ -72,7 +72,7 @@ index 76547cb4..c370c24c 100644
    // Draining, what is decoded is owed however little filled the buffer - a disc menu's still is a
    // clip of one picture - and is asked for: the queue count misses a picture the driver holds ready.
    if ((m_drain ||
-@@ -3901,6 +3909,40 @@ void CAMLCodec::RestartDecoderTimeout()
+@@ -3907,6 +3915,40 @@ void CAMLCodec::RestartDecoderTimeout()
    m_tp_last_frame = m_tp_no_progress = std::chrono::steady_clock::now();
  }
  
@@ -114,7 +114,7 @@ index 76547cb4..c370c24c 100644
  void CAMLCodec::NoteCall(std::chrono::steady_clock::time_point now)
  {
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
-index aa9bc062..19ba77ac 100644
+index 2598c13..fda9f81 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 @@ -20,6 +20,7 @@
@@ -137,6 +137,3 @@ index aa9bc062..19ba77ac 100644
  
    bool            m_buffer_level_ready{false};
    float           m_minimum_buffer_level{0.0f};
--- 
-2.53.0
-

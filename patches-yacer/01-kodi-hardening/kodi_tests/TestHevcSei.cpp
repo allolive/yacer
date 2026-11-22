@@ -96,12 +96,10 @@ TEST(HevcSei, IgnoresABufferTooShortToHoldAMessage)
   EXPECT_TRUE(Parse(Rbsp({0x01, 0x02})).empty());
 }
 
-// Without the saturating AvailableBits this input does not terminate. The
-// payload-type run reads past the end, ReadBits advances the position anyway,
-// the unclamped remainder wraps to about four billion, the size check passes,
-// SkipBits(0) moves nothing and the loop never reaches its exit - messages
-// accumulate until the process is killed. Verified: the unpatched reader hangs
-// on exactly these five bytes.
+// The payload-type run reads past the end and ReadBits advances the position
+// anyway, so the remainder wraps to about four billion. Unless the overread
+// itself ends the parse, the size check passes, SkipBits(0) moves nothing and
+// messages accumulate until the process is killed.
 TEST(HevcSei, TerminatesOnAPayloadTypeRunReachingTheEndOfTheBuffer)
 {
   EXPECT_LE(Parse(Rbsp({0xFF, 0xFF, 0xFF})).size(), 1u);

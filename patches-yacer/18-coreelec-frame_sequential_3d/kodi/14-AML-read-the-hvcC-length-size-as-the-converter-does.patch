@@ -18,22 +18,27 @@ Annex-B it does on exactly that test.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index 8321ee4..e951c46 100644
+index 3116579..b4fde8c 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-@@ -359,11 +359,10 @@ bool CDVDVideoCodecAmlogic::Open(CDVDStreamInfo &hints, CDVDCodecOptions &option
+@@ -359,15 +359,14 @@ bool CDVDVideoCodecAmlogic::Open(CDVDStreamInfo &hints, CDVDCodecOptions &option
        }
        m_pFormatName = "am-h265";
        m_bitstream = new CBitstreamConverter();
 -      m_bitstream->Open(m_hints.codec, m_hints.extradata.GetData(), m_hints.extradata.GetSize(), true);
--
--      // length-prefix size from the original hvcC, read before the extradata
--      // below becomes Annex-B. Stays 0 for Annex-B input
--      if (m_hints.extradata.GetSize() > 21 && m_hints.extradata.GetData()[0] == 1)
 +      // it opens on hvcC extradata only; the length-prefix size is read before the extradata
 +      // below becomes Annex-B, and stays 0 for Annex-B input
 +      if (m_bitstream->Open(m_hints.codec, m_hints.extradata.GetData(),
 +                            m_hints.extradata.GetSize(), true))
-         m_nalLengthSize = (m_hints.extradata.GetData()[21] & 0x3) + 1;
++        m_nalLengthSize = (m_hints.extradata.GetData()[21] & 0x3) + 1;
+       if (!m_bitstream->NeedConvert())
+         m_bitstream->ResetStartDecode();
  
+-      // length-prefix size from the original hvcC, read before the extradata
+-      // below becomes Annex-B. Stays 0 for Annex-B input
+-      if (m_hints.extradata.GetSize() > 21 && m_hints.extradata.GetData()[0] == 1)
+-        m_nalLengthSize = (m_hints.extradata.GetData()[21] & 0x3) + 1;
+-
        // check for hevc-hvcC and convert to h265-annex-b
+       if (m_hints.extradata && !m_hints.cryptoSession)
+       {

@@ -24,7 +24,7 @@ after that keep the band.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp
-index 90b1a0f..305c188 100644
+index 45961cc..0d027ea 100644
 --- a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp
 +++ b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp
 @@ -49,6 +49,11 @@ constexpr double MAX_LATE_START_MS = 500.0; // late start of audio left to the p
@@ -39,7 +39,7 @@ index 90b1a0f..305c188 100644
  //! \brief Retry interval for a sink that will not open, doubling to a ceiling.
  //! A device that returns announces itself, so only a fault that clears by itself needs the
  //! interval to stay short.
-@@ -2267,6 +2272,7 @@ bool CActiveAE::RunStages()
+@@ -2277,6 +2282,7 @@ bool CActiveAE::RunStages()
          }
          (*it)->m_syncError.Add(error);
          (*it)->m_syncErrorRaw.Add(errorRaw);
@@ -47,7 +47,7 @@ index 90b1a0f..305c188 100644
          if (m_mode == MODE_RAW)
            (*it)->m_syncObservations.Add(errorMeasured, errorRaw, error, (*it)->m_errorScale,
                                          maxError, playingPts, clock, delay, m_syncDelayGeneration,
-@@ -2760,23 +2766,22 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
+@@ -2775,23 +2781,22 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
    }
    else if (newerror && stream->m_syncState == CAESyncInfo::AESyncState::SYNC_MUTE)
    {
@@ -84,8 +84,8 @@ index 90b1a0f..305c188 100644
 +              average);
    }
  
-   // While the error is averaged, samples that will not be skipped stay audible.
-@@ -2873,7 +2878,9 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
+   // While the error is averaged, samples that will not be skipped stay audible. Not in passthrough,
+@@ -2890,7 +2895,9 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
          // The same crossing as the delay branch: a whole frame of real time
          // goes, and the scaled error is owed only its share of it.
          const double dropped = stream->m_format.m_streamInfo.GetDuration();
@@ -96,7 +96,7 @@ index 90b1a0f..305c188 100644
          {
            stream->m_syncError.Correction(dropped * stream->m_errorScale);
            stream->m_syncErrorRaw.Correction(dropped);
-@@ -2900,8 +2907,9 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
+@@ -2917,8 +2924,9 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
  
      // The band is a tolerance on real time - the comment on the scaling calls it
      // a frame - so it is compared in the units the bursts were spent in.
