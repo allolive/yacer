@@ -1,20 +1,19 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: allolive <160342668+allolive@users.noreply.github.com>
 Date: Thu, 17 Sep 2026 03:25:53 +0000
-Subject: [PATCH] HevcSei: stop parsing on payload size exceeding remaining
- bits
+Subject: [PATCH] HevcSei: keep a long SEI payload type from wrapping
 
-HevcSei.cpp compares m_payloadSize, which is a byte count, against
-AvailableBits(), a bit count, so a payload up to 8x the remaining data
-passes the check. SkipBits() then runs past the end and the parse loop
-can keep going on garbage instead of stopping. Compare against
-AvailableBits() / 8 instead.
+m_payloadType is accumulated in steps of 255 (one 0xFF byte per step)
+but is a uint8_t, so a type written as FF 05 (260) wraps to 4 and is
+read as a T.35 message. Widen it to uint32_t to match m_payloadSize.
 
-AvailableBits() itself underflows to a huge unsigned value once
-m_posBits passes length * 8; clamp it to 0.
-
-m_payloadType is accumulated in 255 increments, so widen it from
-uint8_t to uint32_t to match m_payloadSize.
+The bounds checks this patch used to carry are not needed any more:
+upstream 14bc737b0f "HevcSei: Stop at an SEI message that runs past the
+NAL" compares the payload size against AvailableBits() / 8 and stops on
+CBitstreamReader::Overflow(). That also covers the reason for the
+AvailableBits() clamp this patch used to add: the only callers of
+AvailableBits() are the two sites in HevcSei.cpp, and neither can reach
+the wrapped value once Overflow() is checked.
 
 Needs a malformed stream to trigger. Not exercised on hardware.
 
