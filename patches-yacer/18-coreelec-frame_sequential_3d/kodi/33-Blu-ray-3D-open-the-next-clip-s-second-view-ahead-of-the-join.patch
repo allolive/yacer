@@ -39,7 +39,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  6 files changed, 352 insertions(+), 45 deletions(-)
 
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.cpp b/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.cpp
-index 6f64bc55..ac544f29 100644
+index 6f64bc5..ac544f2 100644
 --- a/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.cpp
 @@ -24,6 +24,8 @@
@@ -92,7 +92,7 @@ index 6f64bc55..ac544f29 100644
    }
    return true;
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.h b/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.h
-index 7152afd7..ef624bcc 100644
+index 7152afd..ef624bc 100644
 --- a/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.h
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.h
 @@ -25,6 +25,8 @@
@@ -123,7 +123,7 @@ index 7152afd7..ef624bcc 100644
 +  std::function<int64_t(int64_t clipTimestamp)> m_entryPointAt;
  };
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/BlurayClipReader.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/BlurayClipReader.cpp
-index 2615d45a..ff683cbe 100644
+index 2615d45..ff683cb 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/BlurayClipReader.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/BlurayClipReader.cpp
 @@ -8,7 +8,11 @@
@@ -433,7 +433,7 @@ index 2615d45a..ff683cbe 100644
 +  return demux;
 +}
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/BlurayClipReader.h b/xbmc/cores/VideoPlayer/DVDInputStreams/BlurayClipReader.h
-index e1b6094e..03871c0b 100644
+index e1b6094..03871c0 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/BlurayClipReader.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/BlurayClipReader.h
 @@ -14,7 +14,10 @@
@@ -551,7 +551,7 @@ index e1b6094e..03871c0b 100644
 +  std::map<std::string, std::shared_ptr<const EntryPoints>> m_mvcEntryPoints;
  };
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index eee4da15..9083ed84 100644
+index 20d53c9..7c2c0b8 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 @@ -94,6 +94,7 @@ CDVDInputStreamBluray::CDVDInputStreamBluray(IVideoPlayer* player, const CFileIt
@@ -565,7 +565,7 @@ index eee4da15..9083ed84 100644
 @@ -104,6 +105,7 @@ CDVDInputStreamBluray::~CDVDInputStreamBluray()
  void CDVDInputStreamBluray::Abort()
  {
-   m_aborted = true;
+   CDVDInputStream::Abort();
 +  m_clipReader.Abort();
  
    // the extension's file may be waiting out a stalled source on the player thread
@@ -665,10 +665,10 @@ index eee4da15..9083ed84 100644
  }
  
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index 5bfbdd99..353cb4b8 100644
+index 15ad758..f1a7b1a 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-@@ -228,6 +228,7 @@ protected:
+@@ -227,6 +227,7 @@ protected:
  
    bool OpenBaseClip();
    bool OpenMVCDemux(int playItem);
