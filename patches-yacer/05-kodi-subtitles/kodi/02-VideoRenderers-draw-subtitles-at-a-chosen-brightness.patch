@@ -21,6 +21,15 @@ actually draws with.
   so a caption and a dimmer line beside it keep their contrast. The palette
   is scaled in linear light through the PQ curve and rounded down, so nothing
   comes out above the value asked for.
+- An SDR PGS drawn over PQ video is converted to a PQ copy at the video's SDR
+  white when it is first drawn, and is held like an authored one: its light is
+  measured on the colours that copy will hold, and shared with the objects
+  shown with it, authored in HDR or not, before the copy is made, which takes
+  the shared measure from the original. Each such object measured alone would
+  be dimmed to the ceiling whatever its own light, and two of different
+  brightness would lose their contrast. The measure follows the video's
+  composite settings, taken up before it is made and, when they change,
+  measured again.
 - Every other subtitle is sRGB by the time it is drawn: text through libass,
   SDR image subtitles, an HDR one converted for SDR output. Its white is the
   interface's while the HDR composite converts the interface, 203 nits on
@@ -130,7 +139,7 @@ index f3e27ff..54fd932 100644
      overlay->palette.clear();
      overlay->linesize = ov->w * 4;
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
-index a79fd2b..a4999bf 100644
+index a79fd2b..2089cac 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
 @@ -30,6 +30,9 @@
@@ -159,50 +168,76 @@ index a79fd2b..a4999bf 100644
    for (std::vector<SElement>::iterator it = list.begin(); it != list.end(); ++it)
    {
      if (it->overlay_dvd)
-@@ -555,6 +560,42 @@ void CRenderer::PrepareOverlays(int idx)
+@@ -555,6 +560,68 @@ void CRenderer::PrepareOverlays(int idx)
      MarkDirty();
  }
  
 +void CRenderer::ShareSubtitlePeaks(std::vector<SElement>& list)
 +{
-+  if (OVERLAY::SubtitleBrightnessNits() <= 0.0f)
++  // The PQ copy of an SDR PGS is made for the video's composite, which Convert
++  // takes up only when it first draws an object: take it up here, ahead of the
++  // measure, and have the SDR PGS measures follow it, in every buffer.
++  const HdrCompositeVideo video = CServiceBroker::GetWinSystem()->GetHdrCompositeVideo();
++  std::vector<float*> dependent;
++  if (video != m_compositeVideo)
++  {
++    for (std::vector<SElement>& buffer : m_buffers)
++      for (SElement& e : buffer)
++        if (e.overlay_dvd && e.overlay_dvd->IsOverlayType(DVDOVERLAY_TYPE_IMAGE))
++        {
++          auto& o = static_cast<CDVDOverlayImage&>(*e.overlay_dvd);
++          if (o.m_isSDRPgs)
++            dependent.push_back(&o.m_groupPeakNits);
++        }
++  }
++  if (OVERLAY::FollowComposite(m_compositeVideo, video, dependent))
++    ReleaseCache();
++
++  const float nits = OVERLAY::SubtitleBrightnessNits();
++  if (nits <= 0.0f)
 +    return;
 +
-+  // HDR image subtitle objects shown together - a caption and a sign, a line
-+  // and its italics - share the brightest light among them, so holding them
-+  // to the chosen nits keeps their contrast instead of lifting each to it.
++  // An SDR PGS is drawn from a PQ copy Convert makes at the video's SDR white
++  // (once, when the object is first drawn), so its light is measured the way
++  // that copy will hold it; the copy takes m_groupPeakNits from the original.
++  const bool sdrPgsAsPq = m_compositeVideo.transfer == AVCOL_TRC_SMPTE2084 &&
++                          m_compositeVideo.sdrWhite > 0.0f;
++
++  std::vector<OVERLAY::SubtitlePeakSource> sources;
 +  for (SElement& e : list)
 +  {
 +    if (!e.overlay_dvd || !e.overlay_dvd->IsOverlayType(DVDOVERLAY_TYPE_IMAGE))
 +      continue;
-+    auto& img = static_cast<CDVDOverlayImage&>(*e.overlay_dvd);
-+    if (img.m_groupPeakNits > 0.0f || !img.m_isHDROverlay || img.IsDiscMenu() || img.palette.empty())
-+      continue;
++    auto& o = static_cast<CDVDOverlayImage&>(*e.overlay_dvd);
 +
-+    float peak = 0.0f;
-+    std::vector<CDVDOverlayImage*> group;
-+    for (SElement& other : list)
++    OVERLAY::SubtitlePeakSource source;
++    const bool convertedSdrPgs = o.m_isSDRPgs && sdrPgsAsPq;
++    source.pqLight = OVERLAY::DrawnFromPq(o.m_isHDROverlay, o.m_isSDRPgs, sdrPgsAsPq);
++    source.discMenu = o.IsDiscMenu();
++    source.hasPalette = !o.palette.empty();
++    source.pts = o.iPTSStartTime;
++    source.groupPeakNits = &o.m_groupPeakNits;
++    source.measure = [&o, convertedSdrPgs, this]
 +    {
-+      if (!other.overlay_dvd || !other.overlay_dvd->IsOverlayType(DVDOVERLAY_TYPE_IMAGE))
-+        continue;
-+      auto& o = static_cast<CDVDOverlayImage&>(*other.overlay_dvd);
-+      if (!o.m_isHDROverlay || o.IsDiscMenu() || o.palette.empty() ||
-+          o.iPTSStartTime != img.iPTSStartTime)
-+        continue;
-+      peak = std::max(peak, OVERLAY::PQPalettePeakNits(o.palette, o.pixels.data(), o.linesize,
-+                                                       o.width, o.height));
-+      group.push_back(&o);
-+    }
-+    // none visible: measured anyway, so the group is not measured again
-+    for (CDVDOverlayImage* o : group)
-+      o->m_groupPeakNits = std::max(peak, 1e-3f);
++      if (convertedSdrPgs && !o.m_isHDROverlay)
++        return OVERLAY::SdrPgsPeakNits(o.palette, o.pixels.data(), o.linesize, o.width, o.height,
++                                       m_compositeVideo.sdrWhite, m_compositeVideo.sdrGamma);
++      return OVERLAY::PQPalettePeakNits(o.palette, o.pixels.data(), o.linesize, o.width,
++                                        o.height);
++    };
++    sources.push_back(std::move(source));
 +  }
++
++  // HDR image subtitle objects shown together - a caption and a sign, a line
++  // and its italics - share the brightest light among them, so holding them
++  // to the chosen nits keeps their contrast instead of lifting each to it.
++  OVERLAY::ShareGroupPeaks(sources, nits);
 +}
 +
  std::shared_ptr<COverlay> CRenderer::ConvertLibass(SElement& e)
  {
    // If no images not execute the renderer
-@@ -574,9 +615,42 @@ std::shared_ptr<COverlay> CRenderer::ConvertLibass(SElement& e)
+@@ -574,9 +641,42 @@ std::shared_ptr<COverlay> CRenderer::ConvertLibass(SElement& e)
      }
    }
  
@@ -338,7 +373,7 @@ index e719834..7613f48 100644
      // the direct back-buffer draw in Render bypasses the composite's
      // limited-range encode, so apply it to the palette here
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-index 9024612..b53d991 100644
+index 9024612..c853a7c 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 @@ -553,6 +553,14 @@ float LinearToSrgbComponent(float c)
@@ -356,7 +391,7 @@ index 9024612..b53d991 100644
  } // namespace
  
  float EncodePQ(float y)
-@@ -604,6 +612,153 @@ void ConvertPQPaletteToSRGB(std::vector<uint32_t>& palette)
+@@ -604,6 +612,195 @@ void ConvertPQPaletteToSRGB(std::vector<uint32_t>& palette)
    }
  }
  
@@ -397,6 +432,48 @@ index 9024612..b53d991 100644
 +      continue;
 +    for (const int shift : PALETTE_SHIFT)
 +      peak = std::max(peak, DecodePQ(((entry >> shift) & 0xff) / 255.0f));
++  }
++  return peak * 10000.0f;
++}
++
++float SdrPgsPeakNits(const std::vector<uint32_t>& palette,
++                     const uint8_t* indices,
++                     int stride,
++                     int width,
++                     int height,
++                     float sdrWhite,
++                     float sdrGamma)
++{
++  // The conversion CRenderer::Convert applies to an SDR PGS drawn over PQ
++  // video: linear BT.709 to BT.2020 primaries, ITU-R BT.2087.
++  constexpr float BT709_TO_2020[3][3] = {
++      {0.627403896f, 0.329283039f, 0.043313065f},
++      {0.069097289f, 0.919540395f, 0.011362316f},
++      {0.016391439f, 0.088013308f, 0.895595253f},
++  };
++
++  bool used[256];
++  MarkUsedIndices(indices, stride, width, height, used);
++
++  const float whiteScale = sdrWhite / 10000.0f;
++  float peak = 0.0f;
++  for (size_t i = 0; i < palette.size() && i < 256; i++)
++  {
++    const uint32_t entry = palette[i];
++    if (!used[i] || ((entry >> PIXEL_ASHIFT) & 0xff) == 0)
++      continue;
++
++    float linear709[3];
++    for (int c = 0; c < 3; c++)
++      linear709[c] = std::pow(((entry >> PALETTE_SHIFT[c]) & 0xff) / 255.0f, sdrGamma) * whiteScale;
++    for (const auto& row : BT709_TO_2020)
++    {
++      const float linear =
++          row[0] * linear709[0] + row[1] * linear709[1] + row[2] * linear709[2];
++      // the 8-bit code the converted palette holds
++      const uint32_t code = static_cast<uint32_t>(EncodePQ(linear) * 255.0f + 0.5f);
++      peak = std::max(peak, DecodePQ(code / 255.0f));
++    }
 +  }
 +  return peak * 10000.0f;
 +}
@@ -511,18 +588,23 @@ index 9024612..b53d991 100644
  {
    auto stereo_mode = CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode();
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
-index f6a321c..def5ddf 100644
+index f6a321c..730e855 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
-@@ -10,6 +10,7 @@
+@@ -8,8 +8,12 @@
  
+ #pragma once
+ 
++#include <algorithm>
++#include <functional>
++
  #include <stdint.h>
  #include <stdlib.h>
 +#include <cstdint>
  #include <vector>
  
  class CDVDOverlayImage;
-@@ -50,6 +51,47 @@ void ConvertPQPaletteToSRGB(std::vector<uint32_t>& palette);
+@@ -50,6 +54,140 @@ void ConvertPQPaletteToSRGB(std::vector<uint32_t>& palette);
  //! Linear light (1.0 == 10000 nits) to a PQ code value (0-1), SMPTE ST 2084.
  float EncodePQ(float y);
  
@@ -533,6 +615,99 @@ index f6a321c..def5ddf 100644
 +                        int stride,
 +                        int width,
 +                        int height);
++
++//! Nits of the brightest channel of the PQ palette an SDR PGS bitmap is drawn
++//! with once the renderer has converted it to the video's SDR white (sdrWhite,
++//! in nits, and sdrGamma, as the HDR composite reports them): the entries the
++//! bitmap uses, through the same BT.709 to BT.2020 conversion and 8-bit PQ
++//! coding, so it is the light PQPalettePeakNits() would find on that copy.
++float SdrPgsPeakNits(const std::vector<uint32_t>& palette,
++                     const uint8_t* indices,
++                     int stride,
++                     int width,
++                     int height,
++                     float sdrWhite,
++                     float sdrGamma);
++
++//! Whether an image subtitle object is drawn from PQ light: authored in HDR, or
++//! an SDR PGS the renderer converts to a PQ copy (over PQ video with a known
++//! SDR white), which Convert makes from the object when it is first drawn.
++inline bool DrawnFromPq(bool authoredHdr, bool sdrPgs, bool sdrPgsConvertedToPq)
++{
++  return authoredHdr || (sdrPgs && sdrPgsConvertedToPq);
++}
++
++//! Takes the video's composite settings the renderer draws against, next, in
++//! place of current. What a PQ copy of an SDR PGS holds depends on them, so when
++//! they change the shared measures of those objects (dependentPeaks, those of
++//! every SDR PGS the renderer holds) are cleared to be measured again. Returns
++//! whether they changed: the cached textures were built for the previous ones.
++template<class Composite>
++inline bool FollowComposite(Composite& current,
++                            const Composite& next,
++                            const std::vector<float*>& dependentPeaks)
++{
++  if (next == current)
++    return false;
++
++  current = next;
++  for (float* peak : dependentPeaks)
++    *peak = 0.0f;
++  return true;
++}
++
++//! One image subtitle object as the brightness sharing sees it.
++struct SubtitlePeakSource
++{
++  //! An HDR image subtitle, or an SDR PGS the renderer draws as a PQ copy.
++  bool pqLight{false};
++  bool discMenu{false};
++  bool hasPalette{false};
++  double pts{0.0};
++  //! Light, in nits, the objects shown with this one share; 0 until measured.
++  //! Read and written through the object itself, which the renderer caches the
++  //! PQ copy of an SDR PGS from.
++  float* groupPeakNits{nullptr};
++  //! Brightest light of this object alone as it will be drawn, in nits.
++  std::function<float()> measure;
++};
++
++//! Objects that take part in sharing: those drawn from PQ light.
++inline bool JoinsPeakGroup(const SubtitlePeakSource& s)
++{
++  return s.groupPeakNits && s.pqLight && !s.discMenu && s.hasPalette;
++}
++
++//! Gives image subtitle objects shown together - a caption and a sign, a line
++//! and its italics - the brightest light among them, so that holding them to
++//! the chosen nits (ceilingNits, 0 for as authored) keeps their contrast
++//! instead of lifting each to it. Objects share when their start time is the
++//! same; one already measured, a disc menu and an object not drawn from PQ
++//! light are left alone.
++inline void ShareGroupPeaks(std::vector<SubtitlePeakSource>& items, float ceilingNits)
++{
++  if (ceilingNits <= 0.0f)
++    return;
++
++  for (const SubtitlePeakSource& item : items)
++  {
++    if (!JoinsPeakGroup(item) || *item.groupPeakNits > 0.0f)
++      continue;
++
++    float peak = 0.0f;
++    std::vector<const SubtitlePeakSource*> group;
++    for (const SubtitlePeakSource& other : items)
++    {
++      if (!JoinsPeakGroup(other) || other.pts != item.pts)
++        continue;
++      peak = std::max(peak, other.measure());
++      group.push_back(&other);
++    }
++    // none visible: measured anyway, so the group is not measured again
++    for (const SubtitlePeakSource* o : group)
++      *o->groupPeakNits = std::max(peak, 1e-3f);
++  }
++}
 +
 +//! Brightest channel code of the visible palette entries a bitmap of 8-bit
 +//! indices uses.
