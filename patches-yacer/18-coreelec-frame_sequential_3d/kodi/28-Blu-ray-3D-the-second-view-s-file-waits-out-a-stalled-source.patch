@@ -27,23 +27,28 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  2 files changed, 25 insertions(+), 4 deletions(-)
 
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index ebd7d4cf..87142558 100644
+index 48181a6..f66a967 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -104,6 +104,12 @@ CDVDInputStreamBluray::~CDVDInputStreamBluray()
- void CDVDInputStreamBluray::Abort()
- {
-   m_aborted = true;
+@@ -101,6 +101,17 @@ CDVDInputStreamBluray::~CDVDInputStreamBluray()
+   Close();
+ }
+ 
++void CDVDInputStreamBluray::Abort()
++{
++  CDVDInputStream::Abort();
 +
 +  // the extension's file may be waiting out a stalled source on the player thread
 +  std::unique_lock lock(m_mvcInputLock);
 +  m_mvcAborted = true;
 +  if (m_pMVCInput)
 +    m_pMVCInput->Abort();
- }
- 
++}
++
  bool CDVDInputStreamBluray::IsEOF()
-@@ -1761,9 +1767,15 @@ bool CDVDInputStreamBluray::OpenMVCDemux(int playItem)
+ {
+   return false;
+@@ -1756,9 +1767,15 @@ bool CDVDInputStreamBluray::OpenMVCDemux(int playItem)
    CLog::Log(LOGDEBUG, "CDVDInputStreamBluray::OpenMVCDemuxer(): Opening MVC extension stream at {}", strFileName);
  
    CFileItem fileitem(CURL(strFileName), false);
@@ -61,7 +66,7 @@ index ebd7d4cf..87142558 100644
    if (!m_pMVCInput->Open())
    {
      CloseMVCDemux();
-@@ -1795,8 +1807,14 @@ bool CDVDInputStreamBluray::CloseMVCDemux()
+@@ -1790,8 +1807,14 @@ bool CDVDInputStreamBluray::CloseMVCDemux()
      m_pMVCDemux = nullptr;
    }
  
@@ -79,10 +84,18 @@ index ebd7d4cf..87142558 100644
    return true;
  }
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index d1b39d35..f5f4d8df 100644
+index 559ff1e..5bda8fd 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-@@ -252,6 +252,9 @@ protected:
+@@ -72,6 +72,7 @@ public:
+   int Read(uint8_t* buf, int buf_size) override;
+   int ReadBlocks(uint8_t* buf, int lba, int num_blocks);
+   int64_t Seek(int64_t offset, int whence) override;
++  void Abort() override;
+   bool IsEOF() override;
+   int64_t GetLength() override;
+   int GetBlockSize() override { return 6144; }
+@@ -250,6 +251,9 @@ protected:
    // MVC related members
    CDemuxMVC*          m_pMVCDemux = nullptr;
    CDVDInputStream    *m_pMVCInput = nullptr;

@@ -12,10 +12,10 @@ Only playback waits: a scan or a subtitle fetch still fails fast.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDFactoryInputStream.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDFactoryInputStream.cpp
-index 368ae4aa2b..c006ac68e9 100644
+index 2978baa..230c5f7 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDFactoryInputStream.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDFactoryInputStream.cpp
-@@ -179,8 +179,11 @@ std::shared_ptr<CDVDInputStream> CDVDFactoryInputStream::CreateInputStream(IVide
+@@ -180,8 +180,11 @@ std::shared_ptr<CDVDInputStream> CDVDFactoryInputStream::CreateInputStream(IVide
    }
  
    // our file interface handles all these types of streams
@@ -30,7 +30,7 @@ index 368ae4aa2b..c006ac68e9 100644
  
  std::shared_ptr<CDVDInputStream> CDVDFactoryInputStream::CreateInputStream(IVideoPlayer* pPlayer, const CFileItem &fileitem, const std::vector<std::string>& filenames)
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamFile.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamFile.cpp
-index a129064892..3bef48af36 100644
+index a129064..3bef48a 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamFile.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamFile.cpp
 @@ -14,6 +14,8 @@
@@ -66,7 +66,7 @@ index a129064892..3bef48af36 100644
    /* we currently don't support non completing reads */
    if (ret == 0)
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamFile.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamFile.h
-index fc6d3abf3b..237ce79857 100644
+index fc6d3ab..de040af 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamFile.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamFile.h
 @@ -10,6 +10,9 @@
@@ -79,12 +79,10 @@ index fc6d3abf3b..237ce79857 100644
  class CDVDInputStreamFile : public CDVDInputStream
  {
  public:
-@@ -25,9 +28,16 @@ public:
+@@ -25,9 +28,13 @@ public:
    int GetBlockSize() override;
    void SetReadRate(uint32_t rate) override;
    bool GetCacheStatus(XFILE::SCacheStatus *status) override;
-+  void Abort() override { m_aborted = true; }
-+  bool Aborted() const { return m_aborted; }
 +  void SetWaitsForUser(bool waits) { m_waitsForUser = waits; }
 +  uint32_t GetStallCount() const { return m_stallCount; }
  
@@ -92,23 +90,14 @@ index fc6d3abf3b..237ce79857 100644
    XFILE::CFile* m_pFile = nullptr;
    bool m_eof = false;
    unsigned int m_flags = 0;
-+  std::atomic<bool> m_aborted{false};
 +  bool m_waitsForUser = false;
 +  std::atomic<uint32_t> m_stallCount{0};
  };
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/InputStreamMultiSource.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/InputStreamMultiSource.cpp
-index 9dcbffdf4e..a1fc9a858b 100644
+index 8a19304..23311b1 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/InputStreamMultiSource.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/InputStreamMultiSource.cpp
-@@ -29,6 +29,7 @@ CInputStreamMultiSource::~CInputStreamMultiSource()
- 
- void CInputStreamMultiSource::Abort()
- {
-+  m_aborted = true;
-   for (const auto& iter : m_InputStreams)
-     iter->Abort();
- }
-@@ -120,6 +121,8 @@ bool CInputStreamMultiSource::Open()
+@@ -121,6 +121,8 @@ bool CInputStreamMultiSource::Open()
        CLog::Log(LOGERROR, "CDVDPlayer::OpenInputStream - error opening file [{}]", m_filenames[i]);
        continue;
      }
@@ -117,21 +106,3 @@ index 9dcbffdf4e..a1fc9a858b 100644
      m_InputStreams.push_back(inputstream);
    }
    return !m_InputStreams.empty();
-diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/InputStreamMultiSource.h b/xbmc/cores/VideoPlayer/DVDInputStreams/InputStreamMultiSource.h
-index 48fe95cd53..a98c620eb5 100644
---- a/xbmc/cores/VideoPlayer/DVDInputStreams/InputStreamMultiSource.h
-+++ b/xbmc/cores/VideoPlayer/DVDInputStreams/InputStreamMultiSource.h
-@@ -11,6 +11,7 @@
- #include "DVDInputStream.h"
- #include "InputStreamMultiStreams.h"
- 
-+#include <atomic>
- #include <string>
- #include <vector>
- 
-@@ -40,4 +41,5 @@ public:
- protected:
-   IVideoPlayer* m_pPlayer;
-   std::vector<std::string> m_filenames;
-+  std::atomic<bool> m_aborted{false};
- };
