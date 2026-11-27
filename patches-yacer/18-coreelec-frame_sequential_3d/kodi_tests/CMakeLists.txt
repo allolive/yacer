@@ -1,13 +1,4 @@
 # Tests for the frame-sequential 3D group.
-#
-# The Blu-ray subtitle depth parser and its tables are header-only and depend
-# on nothing.
-
-yacer_add_test(
-  NAME MvcSubtitleDepth
-  STANDARD 20
-  SOURCES TestMvcSubtitleDepth.cpp
-)
 
 # The real Reorder/DropLate bodies and VideoPicture's reference handling,
 # extracted at configure time: the codec itself needs the AML decoder stack.

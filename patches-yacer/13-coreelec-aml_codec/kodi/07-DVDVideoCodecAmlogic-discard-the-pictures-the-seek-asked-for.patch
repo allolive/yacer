@@ -88,10 +88,10 @@ index 0000000..b5c7151
 +  bool m_usePictureCount{false};
 +};
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index 4153d55..be13536 100644
+index eb95330..66e00c7 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-@@ -496,6 +496,7 @@ void CDVDVideoCodecAmlogic::Close(void)
+@@ -504,6 +504,7 @@ void CDVDVideoCodecAmlogic::Close(void)
      m_Codec->CloseDecoder(), m_Codec = nullptr;
  
    m_videobuffer.iFlags = 0;
@@ -99,7 +99,7 @@ index 4153d55..be13536 100644
  
    if (m_mpeg2_sequence)
      delete m_mpeg2_sequence, m_mpeg2_sequence = NULL;
-@@ -513,6 +514,8 @@ void CDVDVideoCodecAmlogic::Close(void)
+@@ -521,6 +522,8 @@ void CDVDVideoCodecAmlogic::Close(void)
  
  bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
  {
@@ -108,29 +108,28 @@ index 4153d55..be13536 100644
    // Handle Input, add demuxer packet to input queue, we must accept it or
    // it will be discarded as VideoPlayerVideo has no concept of "try again".
  
-@@ -676,6 +679,11 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
- 
-   if (data_added && packet.pData)
+@@ -695,6 +698,10 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
    {
+     if (m_mvcOffsets)
+       m_mvcOffsets->Commit(m_hints.ptsinvalid ? DVD_NOPTS_VALUE : packet.pts);
 +    // Decode timestamps cannot bound pictures reordered into presentation order.
 +    m_seekPreroll.AcceptPacket(!m_hints.ptsinvalid && packet.pts != DVD_NOPTS_VALUE
 +                                  ? std::optional<double>{packet.pts}
 +                                  : std::nullopt);
-+
+ 
      m_pendingMeta.Inherit(*m_lastMeta);
      // consecutive frames with equal values share one copy
-     if (!(m_pendingMeta == *m_lastMeta))
-@@ -699,6 +707,7 @@ void CDVDVideoCodecAmlogic::Reset(void)
-   m_has_keyframe = false;
-   if (m_frameNumRewriter)
+@@ -721,6 +728,7 @@ void CDVDVideoCodecAmlogic::Reset(void)
      m_frameNumRewriter->ResetState();
+   if (m_mvcOffsets)
+     m_mvcOffsets->Reset();
 +  m_seekPreroll.Reset();
    m_metadataSequencer.Reset();
    m_pendingMeta = m_streamMeta;
    if (m_bitstream)
-@@ -732,6 +741,11 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
-     pVideoPicture->videoBuffer = nullptr;
-     pVideoPicture->SetParams(m_videobuffer);
+@@ -762,6 +770,11 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
+                                               m_subtitlePlane)
+                      : 0;
  
 +    if (m_seekPreroll.ShouldDrop(m_videobuffer.pts != DVD_NOPTS_VALUE
 +                                     ? std::optional<double>{m_videobuffer.pts}
@@ -140,7 +139,7 @@ index 4153d55..be13536 100644
      m_metadataSequencer.Consume(static_cast<double>(m_Codec->GetOMXPts()), m_frameMeta);
      pVideoPicture->videoBuffer = m_videoBufferPool->Get();
      static_cast<CAMLVideoBuffer*>(pVideoPicture->videoBuffer)->Set(this, m_Codec,
-@@ -769,10 +783,8 @@ void CDVDVideoCodecAmlogic::SetCodecControl(int flags)
+@@ -799,10 +812,8 @@ void CDVDVideoCodecAmlogic::SetCodecControl(int flags)
      CLog::Log(LOGDEBUG, LOGVIDEO, "{} {:x}->{:x}",  __func__, m_codecControlFlags, flags);
      m_codecControlFlags = flags;
  
@@ -154,7 +153,7 @@ index 4153d55..be13536 100644
      if (m_Codec)
        m_Codec->SetDrain((flags & DVD_CODEC_CTRL_DRAIN) != 0);
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-index 9d668fa..8f40fcf 100644
+index 40409be..9fb2ee3 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 @@ -9,6 +9,7 @@
@@ -165,7 +164,7 @@ index 9d668fa..8f40fcf 100644
  #include "DVDVideoCodec.h"
  #include "DVDStreamInfo.h"
  #include "threads/CriticalSection.h"
-@@ -124,6 +125,8 @@ private:
+@@ -134,6 +135,8 @@ private:
    bool m_stripHdr10Plus{false};
    bool m_dualLayer{false};
    int m_nalLengthSize{0};

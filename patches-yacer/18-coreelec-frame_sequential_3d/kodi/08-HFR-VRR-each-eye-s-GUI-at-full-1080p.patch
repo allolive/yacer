@@ -86,10 +86,10 @@ index 9c9a5c0..9df079e 100644
        CServiceBroker::GetWinSystem()->GetGfxContext().SetStereoView(RenderStereoView::LEFT);
        hasRendered |= CServiceBroker::GetGUI()->GetWindowManager().Render();
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-index d95898b..88c37aa 100644
+index 5dcc908..de12da4 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-@@ -2907,6 +2907,7 @@ void CAMLCodec::CloseDecoder()
+@@ -2912,6 +2912,7 @@ void CAMLCodec::CloseDecoder()
        CSysfsPath(CAMLDisplay::FS3D_SWAP, 0);
        m_fs3dMode = FS3D_UNSET;
      }
@@ -97,7 +97,7 @@ index d95898b..88c37aa 100644
    }
  
    // never leave vcodec ff/rw or paused.
-@@ -4156,11 +4157,14 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -4163,11 +4164,14 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
      else if (hfr && (layout == "top_bottom" || layout == "bottom_top"))
        mode = MODE_3D_ENABLE | MODE_FORCE_3D_FA_TB | MODE_3D_OUT_FA_L_FIRST;
  
@@ -116,7 +116,7 @@ index d95898b..88c37aa 100644
        dst_rect.x1 *= xs;
        dst_rect.x2 *= xs;
        dst_rect.y1 *= ys;
-@@ -4186,6 +4190,9 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -4193,6 +4197,9 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
        m_fs3dMode = mode;
        m_fs3dSwap = swap;
      }
@@ -146,36 +146,33 @@ index dc992b8..5ddb825 100644
        const std::string layout = CServiceBroker::GetDataCacheCore().GetVideoStereoMode();
        if (layout == "left_right" || layout == "right_left")
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-index ea641fb..c10ef01 100644
+index a032e96..f10b8ec 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-@@ -765,9 +765,9 @@ int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
+@@ -807,7 +807,7 @@ int GetStereoscopicDepth(int subtitleDepth)
  
-   if (stereo_mode == RenderStereoMode::MONO ||
-       stereo_mode == RenderStereoMode::OFF ||
--      stereo_mode == RenderStereoMode::HFR_VRR)
-+      CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoView() == RenderStereoView::OFF)
+   if (CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode() != RenderStereoMode::MONO &&
+       CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode() != RenderStereoMode::OFF &&
+-      CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode() != RenderStereoMode::HFR_VRR)
++      CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoView() != RenderStereoView::OFF)
    {
--    // 2D display or a GUI drawn once, so there's no subtitle depth
-+    // 2D display, or a GUI drawn once (HFR VRR not in effect), so there's no subtitle depth
-     return 0;
-   }
+     depth  = CServiceBroker::GetSettingsComponent()->GetSettings()->GetInt(CSettings::SETTING_SUBTITLES_STEREOSCOPICDEPTH);
  
-@@ -775,7 +775,8 @@ int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
-   int depth = CServiceBroker::GetSettingsComponent()->GetSettings()->GetInt(CSettings::SETTING_SUBTITLES_STEREOSCOPICDEPTH);
+@@ -815,7 +815,8 @@ int GetStereoscopicDepth(int subtitleDepth)
+         CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode();
+     if (stereoMode == RenderStereoMode::HARDWAREBASED ||
+         stereoMode == RenderStereoMode::SPLIT_VERTICAL ||
+-        stereoMode == RenderStereoMode::SPLIT_HORIZONTAL)
++        stereoMode == RenderStereoMode::SPLIT_HORIZONTAL ||
++        stereoMode == RenderStereoMode::HFR_VRR)
+       depth += subtitleDepth;
  
-   // in case of MVC playback and PGS subtitles, use the subtitle depth info additionally to the configured one
--  if(stereo_mode == RenderStereoMode::HARDWAREBASED && isPgs)
-+  if ((stereo_mode == RenderStereoMode::HARDWAREBASED || stereo_mode == RenderStereoMode::HFR_VRR) &&
-+      isPgs)
-   {
-     depth += subtitleDepth;
-   }
+     depth *=
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-index 7d7170a..c9fa695 100644
+index fd7b901..2f5af33 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/RenderManager.cpp
-@@ -937,7 +937,22 @@ void CRenderManager::Render(bool clear, DWORD flags, DWORD alpha, bool gui)
+@@ -938,7 +938,22 @@ void CRenderManager::Render(bool clear, DWORD flags, DWORD alpha, bool gui)
      CRect src, dst, view;
      m_pRenderer->GetVideoRect(src, dst, view);
      m_overlays.SetVideoRect(src, dst, view);
@@ -213,7 +210,7 @@ index d2d0f40..e239640 100644
    COUNT,
  
 diff --git a/xbmc/windowing/GraphicContext.cpp b/xbmc/windowing/GraphicContext.cpp
-index 85bc138..004d9ba 100644
+index 1bf3dcf..90ee629 100644
 --- a/xbmc/windowing/GraphicContext.cpp
 +++ b/xbmc/windowing/GraphicContext.cpp
 @@ -27,6 +27,7 @@
@@ -242,7 +239,7 @@ index 85bc138..004d9ba 100644
    if(m_stereoMode == RenderStereoMode::SPLIT_VERTICAL)
    {
      const RESOLUTION_INFO info = GetResInfo();
-@@ -475,6 +487,8 @@ void CGraphicContext::SetVideoResolutionInternal(RESOLUTION res, bool forceUpdat
+@@ -482,6 +494,8 @@ void CGraphicContext::SetVideoResolutionInternal(RESOLUTION res, bool forceUpdat
  
    if (switched)
    {
@@ -251,7 +248,7 @@ index 85bc138..004d9ba 100644
      m_scissors.SetRect(0, 0, (float)m_iScreenWidth, (float)m_iScreenHeight);
  
      // make sure all stereo stuff are correctly setup
-@@ -664,6 +678,27 @@ const RESOLUTION_INFO CGraphicContext::GetResInfo(RESOLUTION res) const
+@@ -671,6 +685,27 @@ const RESOLUTION_INFO CGraphicContext::GetResInfo(RESOLUTION res) const
      info.fRefreshRate = m_fFPSOverride;
    }
  
@@ -524,10 +521,10 @@ index 08bcb51..f8ee3d7 100644
    //! the stereo mode MessagePump last saw
    RenderStereoMode m_fs3dStereoMode{RenderStereoMode::OFF};
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
-index 57efdc7..1920c9d 100644
+index d27c6ef..82100a4 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
-@@ -188,6 +188,14 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -189,6 +189,14 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
        !force_mode_switch_by_stereo_mode && !force_mode_switch_by_fs3d_rate)
    {
      CLog::Log(LOGDEBUG, "CWinSystemAmlogicGLESContext::{}: No need to create a new window", __FUNCTION__);
@@ -542,7 +539,7 @@ index 57efdc7..1920c9d 100644
      return true;
    }
  
-@@ -223,6 +231,11 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -224,6 +232,11 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
    m_bFullScreen = fullScreen;
    m_nativeGUI = nativeGUI;
  
@@ -554,7 +551,7 @@ index 57efdc7..1920c9d 100644
    if (!CWinSystemAmlogic::CreateNewWindow(name, fullScreen, res))
    {
      if (!m_modeSwitchFallback)
-@@ -237,6 +250,24 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -238,6 +251,24 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
      return false;
    }
  
@@ -579,7 +576,7 @@ index 57efdc7..1920c9d 100644
    uint32_t format = m_pGLContext->GetConfigAttrib(EGL_NATIVE_VISUAL_ID);
    if (!m_amlGBMUtils->CreateSurface(res.iWidth, res.iHeight, format))
    {
-@@ -350,6 +381,12 @@ void CWinSystemAmlogicGLESContext::PresentRender(bool rendered, bool videoLayer)
+@@ -351,6 +382,12 @@ void CWinSystemAmlogicGLESContext::PresentRender(bool rendered, bool videoLayer)
      {
        // this flip latches no earlier than the vsync after the last step: pace on the next one
        m_presentStepSeen = CAMLCodec::PresentSteps();
@@ -592,7 +589,7 @@ index 57efdc7..1920c9d 100644
        m_amlDisplay->FlipPage(m_amlGBMUtils->GetFBId());
      }
    }
-@@ -644,9 +681,12 @@ void CWinSystemAmlogicGLESContext::EndGuiComposite()
+@@ -645,9 +682,12 @@ void CWinSystemAmlogicGLESContext::EndGuiComposite()
    // video renders in the RenderEx pass with clear=false, so DrawBlackBars is
    // never called. Without this clear, letterbox areas retain stale content
    // from the swap chain when the display resolution doesn't change between
@@ -606,7 +603,7 @@ index 57efdc7..1920c9d 100644
  }
  
  // CompositeGui is the last GL operation in the frame (called just before EndRender).
-@@ -672,6 +712,12 @@ void CWinSystemAmlogicGLESContext::CompositeGui()
+@@ -673,6 +713,12 @@ void CWinSystemAmlogicGLESContext::CompositeGui()
      return;
    }
  
@@ -619,7 +616,7 @@ index 57efdc7..1920c9d 100644
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, m_guiFbo.Texture());
  
-@@ -708,6 +754,9 @@ void CWinSystemAmlogicGLESContext::CompositeGui()
+@@ -709,6 +755,9 @@ void CWinSystemAmlogicGLESContext::CompositeGui()
    glDisableVertexAttribArray(texLoc);
  
    m_compositeShader->Disable();

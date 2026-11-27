@@ -47,10 +47,10 @@ another path and are not covered.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/addons/resource.language.en_gb/resources/strings.po b/addons/resource.language.en_gb/resources/strings.po
-index 6f70d03..1767420 100644
+index a3b7215..3853eb8 100644
 --- a/addons/resource.language.en_gb/resources/strings.po
 +++ b/addons/resource.language.en_gb/resources/strings.po
-@@ -25534,6 +25534,30 @@ msgctxt "#39219"
+@@ -25559,6 +25559,30 @@ msgctxt "#39219"
  msgid "Use the system Dolby Vision extensions to correctly display Dolby Vision profile 5, 7 (excludes FEL reconstruction), 8 and 10 video."
  msgstr ""
  
@@ -119,10 +119,10 @@ index 7b18da2..a3f0fea 100644
  
    // pixels are already HDR, matching video's colorimetry
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index f3e27ff..54fd932 100644
+index 2b22afc..5c196ba 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-@@ -1115,6 +1115,7 @@ void CDVDInputStreamBluray::OverlayCallback(const BD_OVERLAY * const ov)
+@@ -1110,6 +1110,7 @@ void CDVDInputStreamBluray::OverlayCallback(const BD_OVERLAY * const ov)
    if (ov->img && ov->cmd == BD_OVERLAY_DRAW)
    {
      SOverlay overlay = std::make_shared<CDVDOverlayImage>();
@@ -130,7 +130,7 @@ index f3e27ff..54fd932 100644
  
      if (ov->palette)
      {
-@@ -1178,6 +1179,7 @@ void CDVDInputStreamBluray::OverlayCallbackARGB(const struct bd_argb_overlay_s *
+@@ -1173,6 +1174,7 @@ void CDVDInputStreamBluray::OverlayCallbackARGB(const struct bd_argb_overlay_s *
    if (ov->argb && ov->cmd == BD_ARGB_OVERLAY_DRAW)
    {
      SOverlay overlay = std::make_shared<CDVDOverlayImage>();
@@ -139,7 +139,7 @@ index f3e27ff..54fd932 100644
      overlay->palette.clear();
      overlay->linesize = ov->w * 4;
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
-index a79fd2b..2089cac 100644
+index f0c7105..1af4b0b 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.cpp
 @@ -30,6 +30,9 @@
@@ -152,7 +152,7 @@ index a79fd2b..2089cac 100644
  
  using namespace KODI;
  using namespace OVERLAY;
-@@ -159,6 +162,7 @@ void CRenderer::Render(int idx, float depth)
+@@ -160,6 +163,7 @@ void CRenderer::Render(int idx, float depth)
        CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoView();
  
    std::vector<SElement>& list = m_buffers[idx];
@@ -160,7 +160,7 @@ index a79fd2b..2089cac 100644
    for(std::vector<SElement>::iterator it = list.begin(); it != list.end(); ++it)
    {
      if (it->overlay_dvd)
-@@ -199,6 +203,7 @@ void CRenderer::RenderHDROverlays(int idx)
+@@ -200,6 +204,7 @@ void CRenderer::RenderHDROverlays(int idx)
    gfxContext.SetRenderOrder(RENDER_ORDER_ALL_BACK_TO_FRONT);
  
    std::vector<SElement>& list = m_buffers[idx];
@@ -168,7 +168,7 @@ index a79fd2b..2089cac 100644
    for (std::vector<SElement>::iterator it = list.begin(); it != list.end(); ++it)
    {
      if (it->overlay_dvd)
-@@ -555,6 +560,68 @@ void CRenderer::PrepareOverlays(int idx)
+@@ -559,6 +564,68 @@ void CRenderer::PrepareOverlays(int idx)
      MarkDirty();
  }
  
@@ -237,7 +237,7 @@ index a79fd2b..2089cac 100644
  std::shared_ptr<COverlay> CRenderer::ConvertLibass(SElement& e)
  {
    // If no images not execute the renderer
-@@ -574,9 +641,42 @@ std::shared_ptr<COverlay> CRenderer::ConvertLibass(SElement& e)
+@@ -578,9 +645,42 @@ std::shared_ptr<COverlay> CRenderer::ConvertLibass(SElement& e)
      }
    }
  
@@ -281,16 +281,16 @@ index a79fd2b..2089cac 100644
    o.m_textureid = m_textureid;
    m_textureid++;
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
-index e4787af..5cccb79 100644
+index 36fa062..4d3539e 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRenderer.h
-@@ -194,6 +194,8 @@ namespace OVERLAY {
+@@ -192,6 +192,8 @@ namespace OVERLAY {
        float renderedFrameHeight{0.0f};
      };
  
 +    //! Gives HDR image subtitle objects shown together one brightness measure.
 +    void ShareSubtitlePeaks(std::vector<SElement>& list);
-     void Render(COverlay* o);
+     void Render(COverlay* o, int subtitleDepth = 0);
      std::shared_ptr<COverlay> Convert(SElement& e);
      // Build a COverlay (cached or freshly created) from the libass output
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererGLES.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererGLES.cpp
@@ -373,7 +373,7 @@ index e719834..7613f48 100644
      // the direct back-buffer draw in Render bypasses the composite's
      // limited-range encode, so apply it to the palette here
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-index 9024612..c853a7c 100644
+index 4dc8a79..d258c7a 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 @@ -553,6 +553,14 @@ float LinearToSrgbComponent(float c)
@@ -584,11 +584,11 @@ index 9024612..c853a7c 100644
 +  }
 +}
 +
- int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
+ int GetStereoscopicDepth(int subtitleDepth)
  {
-   auto stereo_mode = CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode();
+   int depth = 0;
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
-index f6a321c..730e855 100644
+index 3135b57..cb294f8 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.h
 @@ -8,8 +8,12 @@

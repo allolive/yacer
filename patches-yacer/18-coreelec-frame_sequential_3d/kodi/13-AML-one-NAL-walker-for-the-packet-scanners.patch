@@ -243,152 +243,12 @@ index 63c0d84..fb24594 100644
  }
  
  inline bool AMLReadLeb128(const uint8_t* data, size_t end, size_t& pos, uint64_t& value)
-diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
-index 238ee9c..8a87cfd 100644
---- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
-+++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLMvcSubtitleDepth.h
-@@ -11,6 +11,8 @@
- // sequence it follows (the STN-SS ss_offset_sequence_id, or a remux's 3d-plane
- // tag). The OFMD layout follows cinemaONE's CoreELEC/xbmc#77.
- 
-+#include "AMLNalWalker.h"
-+
- #include <algorithm>
- #include <cmath>
- #include <cstddef>
-@@ -62,96 +64,43 @@ inline bool ParseOfmdPayload(const uint8_t* p, size_t avail, Offsets& offsets)
- //! so any message's payload is searched for it, within that payload's bounds.
- inline bool ParseOfmdSei(const uint8_t* nal, size_t len, Offsets& offsets)
- {
--  if (len < 2 || (nal[0] & 0x1f) != 6)
-+  if (len < 2 || (nal[0] & 0x1f) != AVC_NAL_SEI)
-     return false;
- 
--  std::vector<uint8_t> rbsp;
--  rbsp.reserve(len);
--  for (size_t i = 1; i < len; i++)
--  {
--    if (i + 2 < len && nal[i] == 0 && nal[i + 1] == 0 && nal[i + 2] == 3)
--    {
--      rbsp.push_back(0);
--      rbsp.push_back(0);
--      i += 2;
--    }
--    else
--      rbsp.push_back(nal[i]);
--  }
--
--  size_t pos = 0;
--  while (pos < rbsp.size() && rbsp[pos] != 0x80)
--  {
--    size_t type = 0;
--    while (pos < rbsp.size() && rbsp[pos] == 0xff)
--      type += rbsp[pos++];
--    if (pos >= rbsp.size())
--      return false;
--    type += rbsp[pos++];
--    size_t size = 0;
--    while (pos < rbsp.size() && rbsp[pos] == 0xff)
--      size += rbsp[pos++];
--    if (pos >= rbsp.size())
--      return false;
--    size += rbsp[pos++];
--    if (size > rbsp.size() - pos)
--      return false;
--
--    const uint8_t* p = rbsp.data() + pos;
--    const uint8_t* end = p + size;
--    // user_data_unregistered at the top level, or nested in another message
--    if (type == 5 && ParseOfmdPayload(p, size, offsets))
--      return true;
--    for (const uint8_t* q = p; q + sizeof(OFMD_UUID) + 4 <= end; q++)
--    {
--      q = std::search(q, end, std::begin(OFMD_UUID), std::end(OFMD_UUID));
--      if (q == end)
--        break;
--      if (ParseOfmdPayload(q, static_cast<size_t>(end - q), offsets))
--        return true;
--    }
--    pos += size;
--  }
--  return false;
-+  bool found = false;
-+  AMLForEachSeiMessage(
-+      nal, len, 1,
-+      [&](uint32_t type, const uint8_t* p, size_t size)
-+      {
-+        if (type == 0x80) // rbsp_trailing_bits
-+          return false;
-+        const uint8_t* end = p + size;
-+        // user_data_unregistered at the top level, or nested in another message
-+        if (type == SEI_PAYLOAD_USER_DATA_UNREGISTERED && ParseOfmdPayload(p, size, offsets))
-+          found = true;
-+        for (const uint8_t* q = p; !found && q + sizeof(OFMD_UUID) + 4 <= end; q++)
-+        {
-+          q = std::search(q, end, std::begin(OFMD_UUID), std::end(OFMD_UUID));
-+          if (q == end)
-+            break;
-+          found = ParseOfmdPayload(q, static_cast<size_t>(end - q), offsets);
-+        }
-+        return !found;
-+      });
-+  return found;
- }
- 
- //! The OFMD table of an access unit: length-prefixed NALs (avcC), or Annex B when lengthSize is 0
- inline bool ParseOfmd(const uint8_t* data, size_t size, int lengthSize, Offsets& offsets)
- {
--  if (!data)
--    return false;
--  if (lengthSize >= 1 && lengthSize <= 4)
--  {
--    for (size_t pos = 0; pos + lengthSize <= size;)
--    {
--      size_t len = 0;
--      for (int i = 0; i < lengthSize; i++)
--        len = (len << 8) | data[pos + i];
--      pos += lengthSize;
--      if (len == 0 || len > size - pos)
--        return false;
--      if (ParseOfmdSei(data + pos, len, offsets))
--        return true;
--      pos += len;
--    }
--    return false;
--  }
--  size_t start = SIZE_MAX;
--  for (size_t i = 0; i + 2 < size; i++)
--  {
--    if (data[i] != 0 || data[i + 1] != 0 || data[i + 2] != 1)
--      continue;
--    if (start != SIZE_MAX)
--    {
--      size_t end = i;
--      while (end > start && data[end - 1] == 0)
--        end--;
--      if (ParseOfmdSei(data + start, end - start, offsets))
--        return true;
--    }
--    start = i + 3;
--  }
--  return start != SIZE_MAX && start < size && ParseOfmdSei(data + start, size - start, offsets);
-+  bool found = false;
-+  AMLForEachNal(data, size, lengthSize,
-+                [&](const uint8_t* nal, size_t len)
-+                {
-+                  found = ParseOfmdSei(nal, len, offsets);
-+                  return !found;
-+                });
-+  return found;
- }
- 
- /*!
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLNalWalker.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLNalWalker.h
 new file mode 100644
-index 0000000..4b416ae
+index 0000000..307e7ae
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLNalWalker.h
-@@ -0,0 +1,141 @@
+@@ -0,0 +1,140 @@
 +/*
 + *  Copyright (C) 2026 Team CoreELEC
 + *  SPDX-License-Identifier: GPL-2.0-or-later
@@ -422,7 +282,6 @@ index 0000000..4b416ae
 +enum
 +{
 +  SEI_PAYLOAD_REGISTERED_ITU_T_T35 = 4,
-+  SEI_PAYLOAD_USER_DATA_UNREGISTERED = 5,
 +  SEI_PAYLOAD_MASTERING_DISPLAY_COLOUR_VOLUME = 137,
 +  SEI_PAYLOAD_CONTENT_LIGHT_LEVEL_INFO = 144
 +};
@@ -531,10 +390,10 @@ index 0000000..4b416ae
 +  }
 +}
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index 6f60cd8..8321ee4 100644
+index 4919e81..0921597 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-@@ -561,25 +561,19 @@ bool CDVDVideoCodecAmlogic::MvcParamsScan(const uint8_t* data, uint32_t size)
+@@ -564,25 +564,19 @@ bool CDVDVideoCodecAmlogic::MvcParamsScan(const uint8_t* data, uint32_t size)
    bool own = false;
    const uint8_t* header = m_mvcHeader.data();
    const size_t headerSize = m_mvcHeader.size();

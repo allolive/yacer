@@ -29,7 +29,7 @@ start at.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index be13536..68f8649 100644
+index 12cb710..a01e8c5 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 @@ -118,6 +118,9 @@ bool CDVDVideoCodecAmlogic::Open(CDVDStreamInfo &hints, CDVDCodecOptions &option
@@ -56,9 +56,9 @@ index be13536..68f8649 100644
 +                               m_hints.extradata.GetData() + m_hints.extradata.GetSize());
 +        }
          m_frameNumRewriter = std::make_unique<CMVCFrameNumRewriter>();
+         m_mvcOffsets = std::make_unique<CMVCOffsetMetadata>();
          if (m_hints.extradata && m_frameNumRewriter->ProcessAnnexB(m_hints.extradata.GetData(),
-                                                                    m_hints.extradata.GetSize(),
-@@ -512,6 +524,93 @@ void CDVDVideoCodecAmlogic::Close(void)
+@@ -520,6 +532,93 @@ void CDVDVideoCodecAmlogic::Close(void)
    m_opened = false;
  }
  
@@ -152,7 +152,7 @@ index be13536..68f8649 100644
  bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
  {
    m_seekPreroll.SetDrop((m_codecControlFlags & DVD_CODEC_CTRL_DROP) != 0);
-@@ -572,6 +671,17 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -580,6 +679,17 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
        }
        else
        {
@@ -170,10 +170,10 @@ index be13536..68f8649 100644
          if (!m_bitstream->Convert(pData, iSize))
          {
            m_pendingMeta = m_streamMeta;
-@@ -707,6 +817,11 @@ void CDVDVideoCodecAmlogic::Reset(void)
-   m_has_keyframe = false;
-   if (m_frameNumRewriter)
+@@ -728,6 +838,11 @@ void CDVDVideoCodecAmlogic::Reset(void)
      m_frameNumRewriter->ResetState();
+   if (m_mvcOffsets)
+     m_mvcOffsets->Reset();
 +  if (m_hints.codec_tag == MKTAG('M', 'V', 'C', '1') && m_mvcParams == MvcParams::OWN)
 +  {
 +    m_mvcParamsWait = MvcParamsWaitLimit(m_hints);
@@ -183,10 +183,10 @@ index be13536..68f8649 100644
    m_metadataSequencer.Reset();
    m_pendingMeta = m_streamMeta;
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-index 8f40fcf..f838885 100644
+index 9fb2ee3..4ddf9bb 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-@@ -125,6 +125,24 @@ private:
+@@ -135,6 +135,24 @@ private:
    bool m_stripHdr10Plus{false};
    bool m_dualLayer{false};
    int m_nalLengthSize{0};
