@@ -129,7 +129,7 @@ decoded in software at the 5 s bound.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/addons/resource.language.en_gb/resources/strings.po b/addons/resource.language.en_gb/resources/strings.po
-index 4af9019..119b23c 100644
+index cfffe86..8d0292a 100644
 --- a/addons/resource.language.en_gb/resources/strings.po
 +++ b/addons/resource.language.en_gb/resources/strings.po
 @@ -22773,6 +22773,12 @@ msgctxt "#36511"
@@ -161,7 +161,7 @@ index 59952bb..9c9a5c0 100644
        CServiceBroker::GetWinSystem()->GetGfxContext().SetStereoView(RenderStereoView::LEFT);
        hasRendered |= CServiceBroker::GetGUI()->GetWindowManager().Render();
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-index e8f8111..ac4677b 100644
+index 7111429..7f8dae2 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 @@ -77,6 +77,23 @@ void RestoreDvdBlackout()
@@ -212,7 +212,7 @@ index e8f8111..ac4677b 100644
    m_speed = DVD_PLAYSPEED_NORMAL;
    m_drain = false;
    m_cur_pts = DVD_NOPTS_VALUE;
-@@ -2746,6 +2770,10 @@ bool CAMLCodec::OpenDecoder(CDVDStreamInfo &hints, bool doviIsFEL, StreamHdrType
+@@ -2751,6 +2775,10 @@ bool CAMLCodec::OpenDecoder(CDVDStreamInfo &hints, bool doviIsFEL, StreamHdrType
      m_trimEngaged = false;
      m_opened.store(true, std::memory_order_release);
    }
@@ -223,7 +223,7 @@ index e8f8111..ac4677b 100644
  
    // vcodec is open, update speed if it was
    // changed before VideoPlayer called OpenDecoder.
-@@ -2856,8 +2884,10 @@ void CAMLCodec::SetVfmMap(const std::string &name, const std::string &map)
+@@ -2861,8 +2889,10 @@ void CAMLCodec::SetVfmMap(const std::string &name, const std::string &map)
  
  void CAMLCodec::CloseDecoder()
  {
@@ -234,7 +234,7 @@ index e8f8111..ac4677b 100644
    int dolby_vision_policy = AmlDisplay->aml_get_drmProperty("dv_policy", DRM_MODE_OBJECT_CRTC);
    // A failed read (-1, e.g. connector not connected) is not an enabled core.
    bool dv_enabled(AmlDisplay->aml_get_drmProperty("dv_enable", DRM_MODE_OBJECT_CRTC) > 0);
-@@ -2865,6 +2895,20 @@ void CAMLCodec::CloseDecoder()
+@@ -2870,6 +2900,20 @@ void CAMLCodec::CloseDecoder()
  
    SetPollDevice(-1);
  
@@ -255,7 +255,7 @@ index e8f8111..ac4677b 100644
    // never leave vcodec ff/rw or paused.
    if (m_speed != DVD_PLAYSPEED_NORMAL)
    {
-@@ -3882,6 +3926,9 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -3887,6 +3931,9 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
    // this routine gets called every video frame
    // and is in the context of the renderer thread so
    // do not do anything stupid here.
@@ -265,7 +265,7 @@ index e8f8111..ac4677b 100644
    bool update = false;
  
    // video zoom adjustment.
-@@ -3930,6 +3977,40 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -3935,6 +3982,40 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
      m_guiStereoMode = guiStereoMode;
      update = true;
    }
@@ -306,7 +306,7 @@ index e8f8111..ac4677b 100644
    RenderStereoView guiStereoView = CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoView();
    if (m_guiStereoView != guiStereoView)
    {
-@@ -3974,7 +4055,7 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -3979,7 +4060,7 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
    if (!update)
    {
      // mainvideo 'should' be showing already if we get here, make sure.
@@ -315,7 +315,7 @@ index e8f8111..ac4677b 100644
      return;
    }
  
-@@ -4018,7 +4099,9 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -4025,7 +4106,9 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
      dst_rect.y2 = dst_rect.y1 + info.iHeight * 2 + info.iBlanking;
    }
  
@@ -326,7 +326,7 @@ index e8f8111..ac4677b 100644
    {
      int mvc_view_mode = 3;
      switch (am_private->video_format)
-@@ -4048,6 +4131,62 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -4055,6 +4138,62 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
          break;
      }
    }
@@ -389,7 +389,7 @@ index e8f8111..ac4677b 100644
  
  #if 1
    std::string s_dst_rect = StringUtils::Format("{:d},{:d},{:d},{:d}",
-@@ -4085,7 +4224,7 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
+@@ -4092,7 +4231,7 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
  
    // we only get called once gui has changed to something
    // that would show video playback, so show it.
@@ -452,18 +452,18 @@ index 9e8532a..c365f12 100644
    static double m_ttd;
    CProcessInfo &m_processInfo;
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
-index 9ea91d5..1eff484 100644
+index d0ab52f..77e8059 100644
 --- a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
-@@ -2435,7 +2435,7 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
+@@ -2434,7 +2434,7 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
            st->m_description = av_dict_get(pStream->metadata, "title", NULL, 0)->value;
  
          if (pStream->codecpar->codec_id == AV_CODEC_ID_H264 &&
--            static_cast<CWinSystemAmlogic*>(CServiceBroker::GetWinSystem())->GetAmlDisplay()->aml_display_support_3d())
-+            static_cast<CWinSystemAmlogic*>(CServiceBroker::GetWinSystem())->GetAmlDisplay()->aml_display_support_stereo())
+-            static_cast<CWinSystemAmlogic*>(CServiceBroker::GetWinSystem())->GetAmlDisplay()->aml_display_support_3d() &&
++            static_cast<CWinSystemAmlogic*>(CServiceBroker::GetWinSystem())->GetAmlDisplay()->aml_display_support_stereo() &&
+             aml_support_h264mvc())
          {
            if (CDVDCodecUtils::IsH264AnnexB(m_pFormatContext->iformat->name, pStream))
-           {
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
 index a50dbbe..8906332 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/HwDecRender/RendererAML.cpp
@@ -564,24 +564,21 @@ index 7613f48..dc992b8 100644
      // We always consider aligning 4/3 subtitles to the video,
      // for example SD DVB subtitles (4/3) must be stretched on fullhd video
 diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-index b53d991..ea641fb 100644
+index d258c7a..a032e96 100644
 --- a/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoRenderers/OverlayRendererUtil.cpp
-@@ -764,9 +764,10 @@ int GetStereoscopicDepth(bool isPgs, int subtitleDepth)
-   auto stereo_mode = CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode();
+@@ -806,7 +806,8 @@ int GetStereoscopicDepth(int subtitleDepth)
+   int depth = 0;
  
-   if (stereo_mode == RenderStereoMode::MONO ||
--      stereo_mode == RenderStereoMode::OFF)
-+      stereo_mode == RenderStereoMode::OFF ||
-+      stereo_mode == RenderStereoMode::HFR_VRR)
+   if (CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode() != RenderStereoMode::MONO &&
+-      CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode() != RenderStereoMode::OFF)
++      CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode() != RenderStereoMode::OFF &&
++      CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode() != RenderStereoMode::HFR_VRR)
    {
--    // 2D display, so there's no subtitle depth
-+    // 2D display or a GUI drawn once, so there's no subtitle depth
-     return 0;
-   }
+     depth  = CServiceBroker::GetSettingsComponent()->GetSettings()->GetInt(CSettings::SETTING_SUBTITLES_STEREOSCOPICDEPTH);
  
 diff --git a/xbmc/guilib/StereoscopicsManager.cpp b/xbmc/guilib/StereoscopicsManager.cpp
-index 788e541..1fc98f4 100644
+index 320b1ce..21332be 100644
 --- a/xbmc/guilib/StereoscopicsManager.cpp
 +++ b/xbmc/guilib/StereoscopicsManager.cpp
 @@ -85,6 +85,7 @@ static const struct StereoModeMap StringToGuiModeMap[] = {
@@ -602,7 +599,7 @@ index 788e541..1fc98f4 100644
      default:
        msgId = 36502 + static_cast<int>(mode);
    }
-@@ -592,7 +596,7 @@ void CStereoscopicsManager::OnStreamChange()
+@@ -600,7 +604,7 @@ void CStereoscopicsManager::OnStreamChange()
  
    // early return if playback mode should be ignored and we're in no stereoscopic mode right now
    if ((playbackMode == STEREOSCOPIC_PLAYBACK_MODE_IGNORE && mode == RenderStereoMode::OFF) ||
@@ -1207,10 +1204,10 @@ index 48b1b6a..17fbb68 100644
    std::atomic<float> m_frameLatencyMs{0.0f};
    std::atomic<float> m_vblankPhaseMs{0.0f};
 diff --git a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
-index aff7f9a..57efdc7 100644
+index 548872b..d27c6ef 100644
 --- a/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
 +++ b/xbmc/windowing/amlogic/WinSystemAmlogicGLESContext.cpp
-@@ -126,9 +126,17 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -127,9 +127,17 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
  
    StreamHdrType hdrType = CServiceBroker::GetWinSystem()->GetGfxContext().GetHDRType();
    bool force_mode_switch_by_hdr = (m_hdrType != hdrType);
@@ -1229,7 +1226,7 @@ index aff7f9a..57efdc7 100644
  
    // get current used resolution
    if (!m_amlDisplay->aml_get_native_resolution(&current_resolution))
-@@ -159,16 +167,25 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -160,16 +168,25 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
      __FUNCTION__,
      res.iWidth, res.iHeight, res.iScreenWidth, res.iScreenHeight, res.fRefreshRate, res.dwFlags, nativeGUI);
  
@@ -1263,7 +1260,7 @@ index aff7f9a..57efdc7 100644
    {
      CLog::Log(LOGDEBUG, "CWinSystemAmlogicGLESContext::{}: No need to create a new window", __FUNCTION__);
      return true;
-@@ -183,7 +200,7 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
+@@ -184,7 +201,7 @@ bool CWinSystemAmlogicGLESContext::CreateNewWindow(const std::string& name,
      m_force_mode_switch = true;
      m_hotplug_mode_switch = true;
    }
@@ -1272,9 +1269,9 @@ index aff7f9a..57efdc7 100644
    {
      m_force_mode_switch = true;
    }
-@@ -727,5 +744,8 @@ bool CWinSystemAmlogicGLESContext::SupportsStereo(const RenderStereoMode mode) c
-     return true;
-   }
+@@ -736,5 +753,8 @@ bool CWinSystemAmlogicGLESContext::SupportsStereo(const RenderStereoMode mode) c
+       (videoStereoMode == "block_lr" || videoStereoMode == "block_rl"))
+     return false;
  
 +  if (mode == RenderStereoMode::HFR_VRR)
 +    return m_amlDisplay->aml_display_support_fs3d();

@@ -49,7 +49,7 @@ codecs keep what a seek gives them, as before.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
-index ac61f88..f2a98d4 100644
+index 57db95e..50628f7 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 @@ -91,6 +91,7 @@ public:
@@ -60,7 +60,7 @@ index ac61f88..f2a98d4 100644
    void          SetDoviZeroLevel5(bool value);
    void          SetVideoRect(const CRect &SrcRect, const CRect &DestRect);
    void          SetVideoRate(int videoRate);
-@@ -234,7 +235,6 @@ private:
+@@ -233,7 +234,6 @@ private:
    std::chrono::steady_clock::time_point m_tp_no_progress;
    std::chrono::steady_clock::time_point m_tp_last_call;
    int m_last_data_len{0};
@@ -176,7 +176,7 @@ index fb24594..3805101 100644
  {
    value = 0;
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLNalWalker.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLNalWalker.h
-index 4b416ae..0b50b1d 100644
+index 307e7ae..8da9d19 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLNalWalker.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLNalWalker.h
 @@ -16,12 +16,18 @@
@@ -198,16 +198,16 @@ index 4b416ae..0b50b1d 100644
    AVC_NAL_SEI = 6,
    AVC_NAL_SPS = 7,
    AVC_NAL_PPS = 8,
-@@ -32,6 +38,7 @@ enum
+@@ -31,6 +37,7 @@ enum
+ enum
  {
    SEI_PAYLOAD_REGISTERED_ITU_T_T35 = 4,
-   SEI_PAYLOAD_USER_DATA_UNREGISTERED = 5,
 +  SEI_PAYLOAD_RECOVERY_POINT = 6,
    SEI_PAYLOAD_MASTERING_DISPLAY_COLOUR_VOLUME = 137,
    SEI_PAYLOAD_CONTENT_LIGHT_LEVEL_INFO = 144
  };
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index 772a721..d522dd3 100644
+index 2de7546..5a9989b 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 @@ -123,6 +123,8 @@ bool CDVDVideoCodecAmlogic::Open(CDVDStreamInfo &hints, CDVDCodecOptions &option
@@ -219,7 +219,7 @@ index 772a721..d522dd3 100644
    m_nalLengthSize = 0;
    m_streamMeta = {};
    m_stripHdr10Plus = false;
-@@ -546,11 +548,16 @@ void CDVDVideoCodecAmlogic::Close(void)
+@@ -549,11 +551,16 @@ void CDVDVideoCodecAmlogic::Close(void)
   * file whose sets match the header, or that has none, loses nothing on a seek.
   */
  int CDVDVideoCodecAmlogic::MvcParamsWaitLimit(const CDVDStreamInfo& hints)
@@ -237,7 +237,7 @@ index 772a721..d522dd3 100644
  }
  
  // Whether the picture carries SPS, subset SPS and PPS; notes whether they are
-@@ -613,6 +620,30 @@ bool CDVDVideoCodecAmlogic::MvcParamsReady(const uint8_t* data, uint32_t size)
+@@ -616,6 +623,30 @@ bool CDVDVideoCodecAmlogic::MvcParamsReady(const uint8_t* data, uint32_t size)
    return false;
  }
  
@@ -268,7 +268,7 @@ index 772a721..d522dd3 100644
  bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
  {
    m_seekPreroll.SetDrop((m_codecControlFlags & DVD_CODEC_CTRL_DROP) != 0);
-@@ -622,6 +653,13 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -625,6 +656,13 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
    if (!packet.pData || packet.iSize <= 0)
      return true;
  
@@ -282,7 +282,7 @@ index 772a721..d522dd3 100644
    // a full decoder: refused before anything runs on the packet
    if (m_opened && m_Codec && !m_Codec->AcceptsInput(packet.iSize + packet.elSize))
      return false;
-@@ -873,14 +911,14 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -841,14 +879,14 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
        m_retryPts = packet.pts;
        return false;
      case CAMLCodec::AddResult::RESET_NEEDED:
@@ -299,7 +299,7 @@ index 772a721..d522dd3 100644
        return true;
    }
  
-@@ -906,6 +944,16 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -876,6 +914,16 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
  }
  
  void CDVDVideoCodecAmlogic::Reset(void)
@@ -316,7 +316,7 @@ index 772a721..d522dd3 100644
  {
    if (m_Codec)
      m_Codec->Reset();
-@@ -921,7 +969,6 @@ void CDVDVideoCodecAmlogic::Reset(void)
+@@ -892,7 +940,6 @@ void CDVDVideoCodecAmlogic::Reset(void)
      m_mvcParamsSkipped = 0;
    }
    m_seekPreroll.Reset();
@@ -324,7 +324,7 @@ index 772a721..d522dd3 100644
    m_retrySource = nullptr;
    std::vector<uint8_t>().swap(m_retryData);
    m_metadataSequencer.Reset();
-@@ -948,7 +995,14 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
+@@ -923,7 +970,14 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
    if (!m_Codec)
      return VC_ERROR;
  
@@ -339,7 +339,7 @@ index 772a721..d522dd3 100644
  
    if (retVal == VC_PICTURE)
    {
-@@ -1004,6 +1058,8 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
+@@ -973,6 +1027,8 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
  
  void CDVDVideoCodecAmlogic::SetCodecControl(int flags)
  {
@@ -349,12 +349,12 @@ index 772a721..d522dd3 100644
    {
      CLog::Log(LOGDEBUG, LOGVIDEO, "{} {:x}->{:x}",  __func__, m_codecControlFlags, flags);
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-index 5c5fa1f..0d93656 100644
+index 61d9bef..ce08d9d 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-@@ -158,6 +158,19 @@ private:
-   bool m_mvcDepthRangeLogged{false};
-   double m_mvcDepthFirstPts{DVD_NOPTS_VALUE};
+@@ -159,6 +159,19 @@ private:
+   int m_mvcParamsSkipped{0};
+   std::vector<uint8_t> m_mvcHeader;
    static int MvcParamsWaitLimit(const CDVDStreamInfo& hints);
 +  static int PicturesIn(const CDVDStreamInfo& hints, double seconds);
 +  //! what Reset() does to the decoder and the stream state, the keyframe gate aside

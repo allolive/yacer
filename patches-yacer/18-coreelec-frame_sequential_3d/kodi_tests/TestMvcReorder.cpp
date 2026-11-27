@@ -13,7 +13,6 @@
 
 #include <cstdint>
 #include <deque>
-#include <optional>
 #include <utility>
 
 #include <gtest/gtest.h>
@@ -54,13 +53,13 @@ struct VideoPicture
     videoBuffer = nullptr;
     pts = DVD_NOPTS_VALUE;
     iFlags = 0;
-    m_3dSubtitleDepth.reset();
+    m_3dSubtitleDepth = 0;
   }
 
   CVideoBuffer* videoBuffer = nullptr;
   double pts{DVD_NOPTS_VALUE};
   unsigned int iFlags{0};
-  std::optional<int> m_3dSubtitleDepth;
+  int m_3dSubtitleDepth = 0;
 };
 
 class CDVDVideoCodec
@@ -119,7 +118,7 @@ protected:
   // GetPicture's own steps: the previous picture's buffer goes back, the new
   // one comes from the pool with the picture's single reference.
   CDVDVideoCodec::VCReturn Decode(double pts,
-                                  std::optional<int> depth = std::nullopt,
+                                  int depth = 0,
                                   unsigned int flags = 0)
   {
     if (pic.videoBuffer)
@@ -263,7 +262,7 @@ TEST_F(MvcReorder, AnOlderPictureIsNotSwappedButDropped)
 TEST_F(MvcReorder, TheSeekDropGoesWithItsLabel)
 {
   Decode(0);
-  Decode(2 * FRAME, std::nullopt, DVP_FLAG_DROPPED);
+  Decode(2 * FRAME, 0, DVP_FLAG_DROPPED);
 
   ASSERT_EQ(CDVDVideoCodec::VC_PICTURE, Decode(FRAME));
   EXPECT_EQ(1, Out().id);

@@ -56,10 +56,10 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  3 files changed, 59 insertions(+), 49 deletions(-)
 
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
-index 6bef67f..de6a745 100644
+index d551508..7975c53 100644
 --- a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
-@@ -445,8 +445,10 @@ bool CDVDDemuxFFmpeg::Open(const std::shared_ptr<CDVDInputStream>& pInput, bool
+@@ -444,8 +444,10 @@ bool CDVDDemuxFFmpeg::Open(const std::shared_ptr<CDVDInputStream>& pInput, bool
  #ifdef HAVE_LIBBLURAY
      if (m_pInput->IsStreamType(DVDSTREAM_TYPE_BLURAY))
      {
@@ -72,7 +72,7 @@ index 6bef67f..de6a745 100644
        m_blurayReadPos.clear();
      }
  #endif
-@@ -2464,6 +2466,10 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
+@@ -2443,6 +2445,10 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
              AVStream *mvcStream = nullptr;
              const std::shared_ptr<CDVDInputStream::IExtentionStream> pExt = std::dynamic_pointer_cast<CDVDInputStream::IExtentionStream>(m_pInput);
  
@@ -84,7 +84,7 @@ index 6bef67f..de6a745 100644
              {
                delete m_pSSIF;
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
-index f616bc8..36801ca 100644
+index 487a91b..cf0a642 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.cpp
 @@ -45,7 +45,6 @@
@@ -95,7 +95,7 @@ index f616bc8..36801ca 100644
  
  using namespace KODI;
  using namespace std::chrono_literals;
-@@ -589,6 +588,7 @@ void CDVDInputStreamBluray::ProcessEvent() {
+@@ -596,6 +595,7 @@ void CDVDInputStreamBluray::ProcessEvent() {
  
    case BD_EVENT_DISCONTINUITY:
      CLog::Log(LOGDEBUG, "CDVDInputStreamBluray - BD_EVENT_DISCONTINUITY");
@@ -103,7 +103,7 @@ index f616bc8..36801ca 100644
      m_player->OnDiscNavResult(&m_event.param, BD_EVENT_DISCONTINUITY);
      m_hold = HOLD_NONE;
      break;
-@@ -744,15 +744,6 @@ void CDVDInputStreamBluray::ProcessEvent() {
+@@ -751,15 +751,6 @@ void CDVDInputStreamBluray::ProcessEvent() {
  
    /* event has been consumed */
    m_event.event = BD_EVENT_NONE;
@@ -119,7 +119,7 @@ index f616bc8..36801ca 100644
  }
  
  void CDVDInputStreamBluray::DisableExtention()
-@@ -1189,19 +1180,13 @@ bool CDVDInputStreamBluray::PosTime(int ms)
+@@ -1223,19 +1214,13 @@ bool CDVDInputStreamBluray::PosTime(int ms)
      return false;
  
    m_clipStart.clear();
@@ -140,7 +140,7 @@ index f616bc8..36801ca 100644
    return true;
  }
  
-@@ -1242,19 +1227,13 @@ bool CDVDInputStreamBluray::SeekChapter(int ch)
+@@ -1276,19 +1261,13 @@ bool CDVDInputStreamBluray::SeekChapter(int ch)
      return false;
  
    m_clipStart.clear();
@@ -161,7 +161,7 @@ index f616bc8..36801ca 100644
    return true;
  }
  
-@@ -1503,6 +1482,7 @@ CDVDInputStream::ENextStream CDVDInputStreamBluray::NextStream()
+@@ -1541,6 +1520,7 @@ CDVDInputStream::ENextStream CDVDInputStreamBluray::NextStream()
      return NEXTSTREAM_RETRY;
  
    m_hold = HOLD_DATA;
@@ -169,7 +169,7 @@ index f616bc8..36801ca 100644
    return NEXTSTREAM_OPEN;
  }
  
-@@ -1672,6 +1652,7 @@ bool CDVDInputStreamBluray::ProcessItem(int playitem)
+@@ -1710,6 +1690,7 @@ bool CDVDInputStreamBluray::ProcessItem(int playitem)
      }
    }
    CloseMVCDemux();
@@ -177,8 +177,8 @@ index f616bc8..36801ca 100644
    return true;
  }
  
-@@ -1696,34 +1677,30 @@ int CDVDInputStreamBluray::Get3dSubtitlePlane(uint16_t pid)
-   return 0;
+@@ -1734,34 +1715,30 @@ int CDVDInputStreamBluray::Get3dSubtitlePlane(uint16_t pid)
+   return -1;
  }
  
 +// At the end of its file the extension goes on to the next play item, if the base view has moved
@@ -227,7 +227,7 @@ index f616bc8..36801ca 100644
    MPLS_PL *pl = bd_get_title_mpls(m_bd);
    if (!pl || !ClipAt(playItem) || m_nMVCSubPathIndex >= pl->ext_sub_count ||
        playItem >= pl->ext_sub_path[m_nMVCSubPathIndex].sub_playitem_count)
-@@ -1751,9 +1728,8 @@ bool CDVDInputStreamBluray::OpenMVCDemux(int playItem)
+@@ -1789,9 +1766,8 @@ bool CDVDInputStreamBluray::OpenMVCDemux(int playItem)
      return false;
    }
  
@@ -238,7 +238,7 @@ index f616bc8..36801ca 100644
    if (!m_pMVCDemux->Open(m_pMVCInput))
    {
      CloseMVCDemux();
-@@ -1769,6 +1745,7 @@ bool CDVDInputStreamBluray::CloseMVCDemux()
+@@ -1807,6 +1783,7 @@ bool CDVDInputStreamBluray::CloseMVCDemux()
  {
    if (m_pMVCDemux)
    {
@@ -246,7 +246,7 @@ index f616bc8..36801ca 100644
      delete m_pMVCDemux;
      m_pMVCDemux = nullptr;
    }
-@@ -1795,6 +1772,28 @@ void CDVDInputStreamBluray::SeekMVCDemux()
+@@ -1833,6 +1810,28 @@ void CDVDInputStreamBluray::SeekMVCDemux()
    m_pMVCDemux->SeekClipTimestamp(static_cast<int64_t>(clip->in_time) + clipTime);
  }
  
@@ -276,10 +276,10 @@ index f616bc8..36801ca 100644
  {
    if (!m_titleInfo || playItem < 0 || static_cast<uint32_t>(playItem) >= m_titleInfo->clip_count)
 diff --git a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-index 480a8db..454a4f5 100644
+index 31919ac..559ff1e 100644
 --- a/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
 +++ b/xbmc/cores/VideoPlayer/DVDInputStreams/DVDInputStreamBluray.h
-@@ -22,7 +22,6 @@
+@@ -21,7 +21,6 @@
  #include <memory>
  #include <optional>
  #include <string>
@@ -287,7 +287,7 @@ index 480a8db..454a4f5 100644
  
  extern "C"
  {
-@@ -188,6 +187,9 @@ public:
+@@ -186,6 +185,9 @@ public:
  
    //! hand the clip start held at a join to the demuxer opened after it
    void ReleaseClipStart() { m_clipStartHeld = false; }
@@ -297,7 +297,7 @@ index 480a8db..454a4f5 100644
    bool IsClipStartHeld() const { return !m_navmode && m_clipStartHeld && !m_clipStart.empty(); }
  
    void OverlayCallback(const BD_OVERLAY * const);
-@@ -219,9 +221,11 @@ protected:
+@@ -217,9 +219,11 @@ protected:
    static void OverlayInit (SPlane& plane, int w, int h);
    bool ProcessItem(int playitem);
  
@@ -309,7 +309,7 @@ index 480a8db..454a4f5 100644
    BLURAY_CLIP_INFO* ClipAt(int playItem) const;
    //! the play item being read, -1 for none
    int BaseClip() const;
-@@ -253,8 +257,9 @@ protected:
+@@ -251,8 +255,9 @@ protected:
    int                 m_nMVCClip = -1;
    bool                m_bFlipEyes = false;
    bool                m_bMVCDisabled = false;

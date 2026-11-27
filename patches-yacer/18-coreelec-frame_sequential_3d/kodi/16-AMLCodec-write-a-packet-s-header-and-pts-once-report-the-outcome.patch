@@ -74,7 +74,7 @@ anything went in lost it.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-index 141535e..f77dce4 100644
+index 4312f36..ad85ffd 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
 @@ -382,6 +382,10 @@ static const uint64_t UINT64_0 = 0x8000000000000000ULL;
@@ -224,7 +224,7 @@ index 141535e..f77dce4 100644
  int divx3_prefix(am_packet_t *pkt)
  {
  #define DIVX311_CHUNK_HEAD_SIZE 13
-@@ -3086,15 +3104,17 @@ void CAMLCodec::Reset()
+@@ -3110,15 +3128,17 @@ void CAMLCodec::Reset()
    SetPollDevice(am_private->vcodec.cntl_handle);
  }
  
@@ -245,7 +245,7 @@ index 141535e..f77dce4 100644
    {
      m_buffer_level_ready = (streambuffer ? (new_buffer_level > 90.0f) : (new_buffer_level > 5.0f));
      m_minimum_buffer_level = (streambuffer ? 10.0f : 5.0f);
-@@ -3112,22 +3132,31 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
+@@ -3136,22 +3156,31 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
      }
    }
  
@@ -290,7 +290,7 @@ index 141535e..f77dce4 100644
    {
      CLog::Log(LOGDEBUG, "CAMLCodec::{}: feed extradata on first frame. extradata size: {:d}", __FUNCTION__,
        am_private->hdr_buf.size);
-@@ -3143,7 +3172,7 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
+@@ -3167,7 +3196,7 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
      if (ret < 0)
      {
        CLog::Log(LOGDEBUG, "CAMLCodec::{}: ERROR!!! grow_packet for apk failed.!!!", __FUNCTION__);
@@ -299,7 +299,7 @@ index 141535e..f77dce4 100644
      }
  
      pkt->data = pkt->avpkt.data;
-@@ -3153,9 +3182,6 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
+@@ -3177,9 +3206,6 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
      memcpy(pkt->data, am_private->hdr_buf.data, am_private->hdr_buf.size);
  
      iSize += am_private->hdr_buf.size;
@@ -309,7 +309,7 @@ index 141535e..f77dce4 100644
    }
    else
    {
-@@ -3196,36 +3222,59 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
+@@ -3220,36 +3246,59 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
    }
  
    // some formats need header/data tweaks.
@@ -377,7 +377,7 @@ index 141535e..f77dce4 100644
    }
    m_tp_no_progress = std::chrono::steady_clock::now();
    if (iSize > 50000)
-@@ -3233,16 +3282,12 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
+@@ -3257,16 +3306,12 @@ bool CAMLCodec::AddData(uint8_t *pData, size_t iSize, double dts, double pts)
  
    if (iSize > 0)
      CLog::Log(LOGDEBUG, LOGVIDEO,
@@ -397,7 +397,7 @@ index 141535e..f77dce4 100644
  
  int CAMLCodec::AddHDR10PData(uint8_t *pData, size_t iSize)
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
-index ceaf398..60269cb 100644
+index 4fccb1e..57db95e 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.h
 @@ -74,7 +74,18 @@ public:
@@ -421,7 +421,7 @@ index ceaf398..60269cb 100644
    CDVDVideoCodec::VCReturn GetPicture(VideoPicture* pVideoPicture);
  
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index 6624f02..a56d6d3 100644
+index 1cf1c6e..2de7546 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 @@ -121,6 +121,8 @@ bool CDVDVideoCodecAmlogic::Open(CDVDStreamInfo &hints, CDVDCodecOptions &option
@@ -433,7 +433,7 @@ index 6624f02..a56d6d3 100644
    m_nalLengthSize = 0;
    m_streamMeta = {};
    m_stripHdr10Plus = false;
-@@ -497,6 +499,8 @@ FAIL:
+@@ -500,6 +502,8 @@ FAIL:
  
  void CDVDVideoCodecAmlogic::Close(void)
  {
@@ -442,7 +442,7 @@ index 6624f02..a56d6d3 100644
    CLog::Log(LOGDEBUG, "{}::{}", __MODULE_NAME__, __FUNCTION__);
  
    // a successor codec may already own the store, so Unregister only clears our own values
-@@ -618,16 +622,27 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -621,16 +625,27 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
    if (!packet.pData || packet.iSize <= 0)
      return true;
  
@@ -471,9 +471,9 @@ index 6624f02..a56d6d3 100644
 -  if (pData)
 +  if (!refeed)
    {
-     // Blu-ray 3D subtitle depth, read before Convert() can rewrite the access unit:
-     // a remux's MVC1 and a disc's AMVC alike. Tables are keyed by display time: a
-@@ -769,6 +784,13 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+     // named by how the EL arrives; a track pair can open with solo packets, so
+     // dt-dl may correct an early st-dl
+@@ -725,6 +740,13 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
          m_has_keyframe = true;
      }
  
@@ -484,10 +484,10 @@ index 6624f02..a56d6d3 100644
 +      return true;
 +    }
 +
-     if (m_frameNumRewriter &&
-         m_frameNumRewriter->ProcessAnnexB(pData, iSize, m_frameNumBuffer))
+     if (m_mvcOffsets)
      {
-@@ -815,7 +837,7 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+       m_mvcOffsets->Parse(pData, iSize);
+@@ -780,7 +802,7 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
                                                                 packet.iSideDataElems,
                                                                 AV_PKT_DATA_DYNAMIC_HDR10_PLUS);
  
@@ -496,7 +496,7 @@ index 6624f02..a56d6d3 100644
      {
        // mkv block additions arrive parsed since ffmpeg 9, so the raw T.35 the
        // kernel ioctl expects is rebuilt behind the 6 header bytes ffmpeg's
-@@ -835,7 +857,35 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -800,7 +822,35 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
      }
    }
  
@@ -533,7 +533,7 @@ index 6624f02..a56d6d3 100644
  
    if (data_added && packet.pData)
    {
-@@ -874,6 +924,9 @@ void CDVDVideoCodecAmlogic::Reset(void)
+@@ -842,6 +892,9 @@ void CDVDVideoCodecAmlogic::Reset(void)
      m_mvcParamsSkipped = 0;
    }
    m_seekPreroll.Reset();
@@ -544,10 +544,10 @@ index 6624f02..a56d6d3 100644
    m_pendingMeta = m_streamMeta;
    if (m_bitstream)
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-index d78f60e..5c5fa1f 100644
+index 4ddf9bb..61d9bef 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-@@ -126,6 +126,14 @@ private:
+@@ -135,6 +135,14 @@ private:
    bool m_stripHdr10Plus{false};
    bool m_dualLayer{false};
    int m_nalLengthSize{0};

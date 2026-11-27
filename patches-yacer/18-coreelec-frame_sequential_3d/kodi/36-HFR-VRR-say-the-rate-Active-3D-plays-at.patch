@@ -20,10 +20,10 @@ place that notification is made.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/addons/resource.language.en_gb/resources/strings.po b/addons/resource.language.en_gb/resources/strings.po
-index ba92216..cd6ca9d 100644
+index e61719c..b416723 100644
 --- a/addons/resource.language.en_gb/resources/strings.po
 +++ b/addons/resource.language.en_gb/resources/strings.po
-@@ -22761,6 +22761,12 @@ msgctxt "#60112"
+@@ -22815,6 +22815,12 @@ msgctxt "#60112"
  msgid "{0:d} px further"
  msgstr ""
  
@@ -37,11 +37,11 @@ index ba92216..cd6ca9d 100644
  #end of reserved strings for 3d modes
  
 diff --git a/xbmc/guilib/StereoscopicsManager.cpp b/xbmc/guilib/StereoscopicsManager.cpp
-index 1fc98f4..d76b33e 100644
+index 21332be..c1110d5 100644
 --- a/xbmc/guilib/StereoscopicsManager.cpp
 +++ b/xbmc/guilib/StereoscopicsManager.cpp
-@@ -563,7 +563,8 @@ void CStereoscopicsManager::ApplyStereoMode(const RenderStereoMode mode, bool no
-       }
+@@ -571,7 +571,8 @@ void CStereoscopicsManager::ApplyStereoMode(const RenderStereoMode mode, bool no
+         Notify();
      }
  
 -    if (notify)

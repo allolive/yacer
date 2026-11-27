@@ -10,14 +10,16 @@ counts where the 3D pattern matched too, so ".Ou." in a title without a
 
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
+diff --git a/xbmc/settings/AdvancedSettings.cpp b/xbmc/settings/AdvancedSettings.cpp
+index 5d8bc8b..667213d 100644
 --- a/xbmc/settings/AdvancedSettings.cpp
 +++ b/xbmc/settings/AdvancedSettings.cpp
-@@ -532,7 +532,7 @@
+@@ -533,7 +533,7 @@ void CAdvancedSettings::Initialize()
  
    m_stereoscopicregex_3d = "[-. _]3d[-. _]";
-   m_stereoscopicregex_sbs = "[-. _]h?sbs[-. _]";
--  m_stereoscopicregex_tab = "[-. _]h?tab[-. _]";
-+  m_stereoscopicregex_tab = "[-. _](h|half|full)?[-. _]?(tab|ou)[-. _]";
+   m_stereoscopicregex_sbs = "[-. _][fh]?sbs[-. _]";
+-  m_stereoscopicregex_tab = "[-. _][fh]?tab[-. _]";
++  m_stereoscopicregex_tab = "[-. _](f|h|half|full)?[-. _]?(tab|ou)[-. _]";
    m_stereoscopicregex_mvc = "[-. _]h?mvc[-. _]";
  
    m_logLevelHint = m_logLevel = LOG_LEVEL_NORMAL;

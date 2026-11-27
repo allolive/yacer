@@ -15,10 +15,10 @@ flag through one helper that adds it once.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index 08c83d4c1c..12f059e4ad 100644
+index e04b2a4..c913eff 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-@@ -466,7 +466,7 @@ bool CDVDVideoCodecAmlogic::Open(CDVDStreamInfo &hints, CDVDCodecOptions &option
+@@ -474,7 +474,7 @@ bool CDVDVideoCodecAmlogic::Open(CDVDStreamInfo &hints, CDVDCodecOptions &option
      if (!caps.SupportsHDR10Plus())
      {
        m_bitstream->SetRemoveHdr10Plus(true);
@@ -27,7 +27,7 @@ index 08c83d4c1c..12f059e4ad 100644
        m_stripHdr10Plus = true;
      }
      if (caps.SupportsDolbyVision() == DolbyVisionFormat::DOLBYVISION_TYPE_NONE &&
-@@ -692,6 +692,15 @@ void CDVDVideoCodecAmlogic::OpenAsInbandDovi()
+@@ -700,6 +700,15 @@ void CDVDVideoCodecAmlogic::OpenAsInbandDovi()
              __FUNCTION__, profile, dovi.dv_bl_signal_compatibility_id);
  }
  
@@ -43,7 +43,7 @@ index 08c83d4c1c..12f059e4ad 100644
  bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
  {
    m_seekPreroll.SetDrop((m_codecControlFlags & DVD_CODEC_CTRL_DROP) != 0);
-@@ -855,13 +864,8 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -816,13 +825,8 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
        m_h10p.RewriteAu(pData, iSize);
        doviIsFEL = m_bitstream->GetDoviIsFEL();
        IsHdr10Plus = m_bitstream->GetIsHdrPlus();
@@ -59,7 +59,7 @@ index 08c83d4c1c..12f059e4ad 100644
      }
      else if (!m_has_keyframe && m_bitparser)
      {
-@@ -918,6 +922,14 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
+@@ -888,6 +892,14 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
          m_Codec = nullptr;
        }
  
@@ -75,11 +75,11 @@ index 08c83d4c1c..12f059e4ad 100644
  
        m_opened = true;
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-index 0f82451517..87366f2f5c 100644
+index 5cc0b29..b76f8f6 100644
 --- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-@@ -131,6 +131,7 @@ protected:
-   std::vector<uint8_t> m_frameNumBuffer;
+@@ -140,6 +140,7 @@ protected:
+   int m_subtitlePlane{CMVCOffsetMetadata::NO_PLANE};
  private:
    void OpenAsInbandDovi();
 +  void MarkHdr10PlusRemoved();

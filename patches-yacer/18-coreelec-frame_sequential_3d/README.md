@@ -77,13 +77,12 @@ The Kodi patches:
   Invert), and kernel patch 03 shows the eye's half: the subtitle depth setting
   and the skin's 3D effect strength work in HFR VRR. Otherwise the GUI is drawn
   once, as before.
-- 09 gives Blu-ray PG subtitles the disc's own depth, frame by frame (MVC
-  "1 plane + offset"), each picture by its own pts; the disc's depth replaces
-  the subtitle depth setting, which covers subtitles without it.
+- 09 is gone: CoreELEC now reads the disc's own subtitle depth, frame by
+  frame (MVC "1 plane + offset"), and adds it to the subtitle depth setting.
 - 11 consumes an empty packet instead of handing it back forever.
 - 12 starts the Blu-ray second view where the first starts, after a seek too.
 - 13-17 make the AML decoder recover on its own: one NAL walker for the
-  packet scanners (in its own header, so the depth parser stays testable); the
+  packet scanners (in its own header); the
   hvcC length size read as the converter reads it; a decoder timed out on no
   progress or no picture rather than on the last picture; each packet's header
   and pts written once, with its outcome reported (added, dropped, retry,
@@ -109,16 +108,14 @@ The Kodi patches:
   HFR VRR: only the film's rate decides the output there, and the rebuild
   cost a second audio sink reopen a second into every 3D film.
 - 38 gives every subtitle on a 3D film the disc's depth, text and translated
-  ones included, not only PG ones; and a sequence that has carried only
-  zeros counts as no depth, so the configured one stands in until the disc
-  gives a value.
+  ones included, not only image ones.
 - 39 tells the player HFR VRR is coming while it is wanted and not yet on,
   so a 3D film's sound starts after the switch (11_25 waits for it).
 - 40 runs HFR VRR on that fast 1080p, whatever its rate, where the sink's
   VRR range reaches it; the film still plays at 96 Hz (95.904 for 23.976).
 - 41 names the 3D mode Active 3D for VRR displays: it no longer runs on 120 Hz only.
 - 42 lets each film move its subtitles closer or further in 3D, on top of the
-  disc's or the configured depth, from the subtitle settings; kept with its 3D depth.
+  configured and the disc's depth, from the subtitle settings; kept with its 3D depth.
 
 - 43 puts back the timestamps of two pictures the MVC decoder hands out
   swapped after a restart, holding one picture back; one older than a picture

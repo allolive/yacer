@@ -24,7 +24,7 @@ it is.
 Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
 ---
 diff --git a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.cpp b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.cpp
-index 032e8f24..bc17d0ad 100644
+index e87d3e2..71d739d 100644
 --- a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.cpp
 +++ b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAESink.cpp
 @@ -1199,15 +1199,14 @@ unsigned int CActiveAESink::OutputSamples(CSampleBuffer* samples)
@@ -42,7 +42,7 @@ index 032e8f24..bc17d0ad 100644
 -    // A packet dropped for a/v sync has no frames and never enters the loop above. Query the
 -    // sink anyway, otherwise the engine is told the sink holds no audio at all and the next
 -    // sync error measurements are off by the whole sink delay.
--    if (!m_needIecPack && totalFrames == 0)
+-    if (totalFrames == 0)
 -      m_sink->GetDelay(status);
      m_stats->UpdateSinkDelay(status, samples->pool ? 1 : 0);
 -  }

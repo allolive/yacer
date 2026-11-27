@@ -21,7 +21,7 @@ Signed-off-by: allolive <160342668+allolive@users.noreply.github.com>
  1 file changed, 3 insertions(+), 27 deletions(-)
 
 diff --git a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp
-index 0d027ea..97d487c 100644
+index 6c4c547..ef76b18 100644
 --- a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp
 +++ b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp
 @@ -44,7 +44,6 @@ constexpr float MIN_WATER_LEVEL = 0.02f; // min buffer time to prevent underrun
@@ -32,7 +32,7 @@ index 0d027ea..97d487c 100644
  // What a TrueHD passthrough stream's sync error is shrunk by before the sync
  // loop sees it. Named so the unscaled copy kept beside it has one source.
  constexpr double TRUEHD_SYNC_ERROR_SCALE = 0.45;
-@@ -2715,18 +2714,14 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
+@@ -2710,18 +2709,14 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
      ResetSyncObservation(stream, "sync-start");
      stream->m_processingBuffers->SetRR(1.0, m_settings.atempoThreshold);
      stream->m_resampleIntegral = 0;
@@ -51,7 +51,7 @@ index 0d027ea..97d487c 100644
      if (stream->m_pClock)
      {
        double clockspeed = stream->m_pClock->GetClockSpeed();
-@@ -2749,27 +2744,6 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
+@@ -2744,27 +2739,6 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
      }
    }
  
@@ -66,10 +66,10 @@ index 0d027ea..97d487c 100644
 -  }
 -
 -  // Without resampling, the player moves its clock to the audio once the error exceeds its own
--  // limit. Audio starting late is therefore left to the player, as skipping it would lose the
--  // start of the audio. The errors of TrueHD passthrough are scaled down, so they do not tell how
--  // late the audio is.
--  const bool clockFollowsAudio{!stream->m_resampleMode && !IsTrueHDPassthrough()};
+-  // limit, but not below it. Audio starting late is therefore left to the player, as skipping it
+-  // would lose the start of the audio. Not in passthrough, which is muted while the error is
+-  // measured anyway, so the error is adjusted here.
+-  const bool clockFollowsAudio{!stream->m_resampleMode && m_mode != MODE_RAW};
 -  const auto keepAudible = [&](double syncError)
 -  {
 -    return fabs(syncError) <= startThreshold ||
@@ -79,7 +79,7 @@ index 0d027ea..97d487c 100644
    if (newerror && fabs(error) > threshold && stream->m_syncState == CAESyncInfo::AESyncState::SYNC_INSYNC)
    {
      stream->m_syncState = CAESyncInfo::AESyncState::SYNC_ADJUST;
-@@ -2799,12 +2773,9 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
+@@ -2794,12 +2768,9 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
                average);
    }
  
